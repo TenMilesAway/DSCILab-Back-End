@@ -24,3 +24,4 @@ tests/**/coverage/
 tsconfig.tsbuildinfo/target/
 *.jar
 /target/
+/target/
