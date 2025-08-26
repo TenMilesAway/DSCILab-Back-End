@@ -23,3 +23,4 @@ tests/**/coverage/
 *.sln
 tsconfig.tsbuildinfo/target/
 *.jar
+/target/
