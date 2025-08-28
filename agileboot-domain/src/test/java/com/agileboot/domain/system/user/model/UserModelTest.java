@@ -97,6 +97,7 @@ class UserModelTest {
         UserModel userModel = userModelFactory.create();
         long adminId = 1L;
         userModel.setUserId(adminId);
+        userModel.setIsAdmin(true); // 避免因 null 自 动拆箱 NPE，且模拟管理员
         SystemLoginUser loginUser = new SystemLoginUser();
         loginUser.setUserId(2L);
 
@@ -110,6 +111,7 @@ class UserModelTest {
     void testCheckCanBeDeleteWhenSuccessful() {
         UserModel userModel = userModelFactory.create();
         userModel.setUserId(2L);
+        userModel.setIsAdmin(false); // 避免 null Boolean 拆箱 NPE
         SystemLoginUser loginUser = new SystemLoginUser();
         loginUser.setUserId(ADMIN_USER_ID);
 

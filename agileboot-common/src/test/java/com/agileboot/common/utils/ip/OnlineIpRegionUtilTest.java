@@ -1,9 +1,12 @@
 package com.agileboot.common.utils.ip;
 
+import cn.hutool.http.HttpUtil;
 import com.agileboot.common.config.AgileBootConfig;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 
 class OnlineIpRegionUtilTest {
 
@@ -24,10 +27,14 @@ class OnlineIpRegionUtilTest {
 
     @Test
     void getIpRegionWithIpv4() {
-        IpRegion ipRegion = OnlineIpRegionUtil.getIpRegion("120.42.247.130");
+        try (MockedStatic<HttpUtil> mocked = Mockito.mockStatic(HttpUtil.class)) {
+            mocked.when(() -> HttpUtil.get(Mockito.anyString(), Mockito.any(java.nio.charset.Charset.class)))
+                  .thenReturn("{\"pro\":\"福建省\",\"city\":\"泉州市\"}");
 
-        Assertions.assertEquals("福建省", ipRegion.getProvince());
-        Assertions.assertEquals("泉州市", ipRegion.getCity());
+            IpRegion ipRegion = OnlineIpRegionUtil.getIpRegion("120.42.247.130");
+            Assertions.assertEquals("福建省", ipRegion.getProvince());
+            Assertions.assertEquals("泉州市", ipRegion.getCity());
+        }
     }
 
     @Test
@@ -60,4 +67,3 @@ class OnlineIpRegionUtilTest {
 
 
 }
-

@@ -20,6 +20,7 @@
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-infrastructure/src/main/java/com/agileboot/infrastructure/filter/TestFilter.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-infrastructure/src/main/java/com/agileboot/infrastructure/annotations/ratelimit/implementation/MapRateLimitChecker.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-infrastructure/src/main/java/com/agileboot/infrastructure/config/SpringDocConfig.java
+/Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-infrastructure/src/main/java/com/agileboot/infrastructure/config/StaticDocsConfig.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-infrastructure/src/main/java/com/agileboot/infrastructure/config/redis/RedisConfig.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-infrastructure/src/main/java/com/agileboot/infrastructure/cache/RedisUtil.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-infrastructure/src/main/java/com/agileboot/infrastructure/cache/aop/RedisCacheBean.java

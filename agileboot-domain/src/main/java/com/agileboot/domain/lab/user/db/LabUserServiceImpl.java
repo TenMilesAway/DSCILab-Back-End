@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 
 /**
  * 实验室用户Service实现类
- * 
+ *
  * @author agileboot
  */
 @Service
@@ -51,4 +51,10 @@ public class LabUserServiceImpl extends ServiceImpl<LabUserMapper, LabUserEntity
     public boolean isPhoneDuplicated(String phone, Long excludeId) {
         return baseMapper.existsByPhone(phone, excludeId);
     }
+
+    @Override
+    public int hardDeleteById(Long id) {
+        return baseMapper.hardDeleteById(id);
+    }
+
 }

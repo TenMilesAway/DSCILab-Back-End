@@ -8,7 +8,7 @@ import java.time.Year;
 
 /**
  * 更新实验室用户命令
- * 
+ *
  * @author agileboot
  */
 @Data
@@ -53,7 +53,8 @@ public class UpdateLabUserCommand {
     private String researchArea;
 
     @Schema(description = "手机号")
-    @Pattern(regexp = "^1[3-9]\\d{9}$", message = "手机号格式不正确")
+    // 可选：为空或合法手机号
+    @Pattern(regexp = "^(1[3-9]\\d{9})?$", message = "手机号格式不正确")
     private String phone;
 
     @Schema(description = "邮箱")

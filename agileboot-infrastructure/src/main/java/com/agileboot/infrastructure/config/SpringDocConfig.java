@@ -22,8 +22,8 @@ public class SpringDocConfig {
                 .version("v1.8.0")
                 .license(new License().name("MIT 3.0").url("https://github.com/valarchie/AgileBoot-Back-End")))
             .externalDocs(new ExternalDocumentation()
-                .description("Agileboot后台管理系统接口文档")
-                .url("https://juejin.cn/column/7159946528827080734"));
+                .description("实验室用户管理API完整文档（Markdown）")
+                .url("/实验室用户管理API完整文档.md"));
     }
 
 }

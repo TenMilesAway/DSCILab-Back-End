@@ -19,7 +19,7 @@ import java.util.List;
 
 /**
  * 实验室用户CRUD控制器
- * 
+ *
  * @author agileboot
  */
 @Tag(name = "实验室用户CRUD API", description = "实验室用户增删改查接口")
@@ -79,12 +79,27 @@ public class LabUserCrudController extends BaseController {
         return ResponseDTO.ok();
     }
 
+    /**
+     * 管理员重置用户密码（无需旧密码）
+     */
+    @Operation(summary = "管理员重置用户密码", description = "管理员重置用户密码，密码规则与创建用户一致（6-20位）")
+    @PreAuthorize("@permission.has('lab:user:edit') OR @labUserPermission.isAdmin()")
+    @PutMapping("/{userId}/password")
+    public ResponseDTO<Void> resetPasswordByAdmin(
+            @Parameter(description = "用户ID") @PathVariable Long userId,
+            @Validated @RequestBody ResetLabUserPasswordCommand command) {
+        command.setUserId(userId);
+        labUserCrudApplicationService.resetPasswordByAdmin(command);
+        return ResponseDTO.ok();
+    }
+
+
     // ==================== 删除功能 ====================
 
     /**
      * 删除用户
      */
-    @Operation(summary = "删除用户", description = "管理员删除用户（软删除）")
+    @Operation(summary = "删除用户", description = "管理员删除用户（硬删除）")
     @Parameter(name = "userId", description = "用户ID", required = true)
     @PreAuthorize("@permission.has('lab:user:remove') OR @labUserPermission.isAdmin()")
     @DeleteMapping("/{userId}")
@@ -122,12 +137,12 @@ public class LabUserCrudController extends BaseController {
     /**
      * 批量删除用户
      */
-    @Operation(summary = "批量删除用户", description = "管理员批量删除用户")
+    @Operation(summary = "批量删除用户", description = "管理员批量删除用户（硬删除）")
     @PreAuthorize("@permission.has('lab:user:remove') OR @labUserPermission.isAdmin()")
     @DeleteMapping("/batch")
     public ResponseDTO<Void> batchDeleteUsers(@RequestBody List<Long> userIds) {
         for (Long userId : userIds) {
-            labUserCrudApplicationService.deleteUser(userId);
+            labUserCrudApplicationService.deleteUser(userId); // 单个硬删（带存在性校验）
         }
         return ResponseDTO.ok();
     }

@@ -25,19 +25,26 @@ import java.util.stream.Collectors;
 
 /**
  * 实验室用户CRUD应用服务
- * 
+ *
  * @author agileboot
  */
 @Service
 @RequiredArgsConstructor
 public class LabUserCrudApplicationService {
 
+
+    private static String normalizeBlankToNull(String s) {
+        if (s == null) return null;
+        String t = s.trim();
+        return t.isEmpty() ? null : t;
+    }
+
     private final LabUserService labUserService;
     private final PasswordEncoder passwordEncoder;
 
     /**
      * 创建用户
-     * 
+     *
      * @param command 创建命令
      * @return 用户ID
      */
@@ -49,26 +56,26 @@ public class LabUserCrudApplicationService {
         }
 
         // 验证学号唯一性
-        if (StringUtils.hasText(command.getStudentNumber()) && 
+        if (StringUtils.hasText(command.getStudentNumber()) &&
             labUserService.isStudentNumberDuplicated(command.getStudentNumber(), null)) {
             throw new ApiException(ErrorCode.Business.USER_NAME_IS_NOT_UNIQUE);
         }
 
         // 验证邮箱唯一性
-        if (StringUtils.hasText(command.getEmail()) && 
+        if (StringUtils.hasText(command.getEmail()) &&
             labUserService.isEmailDuplicated(command.getEmail(), null)) {
             throw new ApiException(ErrorCode.Business.USER_EMAIL_IS_NOT_UNIQUE);
         }
 
         // 验证手机号唯一性
-        if (StringUtils.hasText(command.getPhone()) && 
+        if (StringUtils.hasText(command.getPhone()) &&
             labUserService.isPhoneDuplicated(command.getPhone(), null)) {
             throw new ApiException(ErrorCode.Business.USER_PHONE_NUMBER_IS_NOT_UNIQUE);
         }
 
         // 创建用户实体
         LabUserEntity user = new LabUserEntity();
-        user.setStudentNumber(command.getStudentNumber());
+        user.setStudentNumber(normalizeBlankToNull(command.getStudentNumber()));
         user.setUsername(command.getUsername());
         user.setRealName(command.getRealName());
         user.setEnglishName(command.getEnglishName());
@@ -77,8 +84,9 @@ public class LabUserCrudApplicationService {
         user.setIdentity(command.getIdentity());
         user.setAcademicStatus(command.getAcademicStatus());
         user.setResearchArea(command.getResearchArea());
-        user.setPhone(command.getPhone());
-        user.setEmail(command.getEmail());
+        // 允许前端传空字符串：统一归一为 null，避免命中唯一索引（'' 与 '' 冲突）
+        user.setPhone(normalizeBlankToNull(command.getPhone()));
+        user.setEmail(normalizeBlankToNull(command.getEmail()));
         user.setStatus(command.getStatus());
         user.setEnrollmentYear(command.getEnrollmentYear());
         user.setGraduationYear(command.getGraduationYear());
@@ -100,7 +108,7 @@ public class LabUserCrudApplicationService {
 
     /**
      * 更新用户信息（管理员）
-     * 
+     *
      * @param command 更新命令
      */
     @Transactional(rollbackFor = Exception.class)
@@ -111,33 +119,33 @@ public class LabUserCrudApplicationService {
         }
 
         // 验证学号唯一性
-        if (StringUtils.hasText(command.getStudentNumber()) && 
+        if (StringUtils.hasText(command.getStudentNumber()) &&
             labUserService.isStudentNumberDuplicated(command.getStudentNumber(), command.getId())) {
             throw new ApiException(ErrorCode.Business.USER_NAME_IS_NOT_UNIQUE);
         }
 
         // 验证邮箱唯一性
-        if (StringUtils.hasText(command.getEmail()) && 
+        if (StringUtils.hasText(command.getEmail()) &&
             labUserService.isEmailDuplicated(command.getEmail(), command.getId())) {
             throw new ApiException(ErrorCode.Business.USER_EMAIL_IS_NOT_UNIQUE);
         }
 
         // 验证手机号唯一性
-        if (StringUtils.hasText(command.getPhone()) && 
+        if (StringUtils.hasText(command.getPhone()) &&
             labUserService.isPhoneDuplicated(command.getPhone(), command.getId())) {
             throw new ApiException(ErrorCode.Business.USER_PHONE_NUMBER_IS_NOT_UNIQUE);
         }
 
         // 更新用户信息
-        user.setStudentNumber(command.getStudentNumber());
+        user.setStudentNumber(normalizeBlankToNull(command.getStudentNumber()));
         user.setRealName(command.getRealName());
         user.setEnglishName(command.getEnglishName());
         user.setGender(command.getGender());
         user.setIdentity(command.getIdentity());
         user.setAcademicStatus(command.getAcademicStatus());
         user.setResearchArea(command.getResearchArea());
-        user.setPhone(command.getPhone());
-        user.setEmail(command.getEmail());
+        user.setPhone(normalizeBlankToNull(command.getPhone()));
+        user.setEmail(normalizeBlankToNull(command.getEmail()));
         user.setStatus(command.getStatus());
         user.setEnrollmentYear(command.getEnrollmentYear());
         user.setGraduationYear(command.getGraduationYear());
@@ -158,7 +166,7 @@ public class LabUserCrudApplicationService {
 
     /**
      * 更新个人信息
-     * 
+     *
      * @param command 更新命令
      */
     @Transactional(rollbackFor = Exception.class)
@@ -174,13 +182,13 @@ public class LabUserCrudApplicationService {
         }
 
         // 验证邮箱唯一性
-        if (StringUtils.hasText(command.getEmail()) && 
+        if (StringUtils.hasText(command.getEmail()) &&
             labUserService.isEmailDuplicated(command.getEmail(), user.getId())) {
             throw new ApiException(ErrorCode.Business.USER_EMAIL_IS_NOT_UNIQUE);
         }
 
         // 验证手机号唯一性
-        if (StringUtils.hasText(command.getPhone()) && 
+        if (StringUtils.hasText(command.getPhone()) &&
             labUserService.isPhoneDuplicated(command.getPhone(), user.getId())) {
             throw new ApiException(ErrorCode.Business.USER_PHONE_NUMBER_IS_NOT_UNIQUE);
         }
@@ -191,8 +199,8 @@ public class LabUserCrudApplicationService {
         user.setGender(command.getGender());
         user.setAcademicStatus(command.getAcademicStatus());
         user.setResearchArea(command.getResearchArea());
-        user.setPhone(command.getPhone());
-        user.setEmail(command.getEmail());
+        user.setPhone(normalizeBlankToNull(command.getPhone()));
+        user.setEmail(normalizeBlankToNull(command.getEmail()));
         user.setGraduationYear(command.getGraduationYear());
         user.setGraduationDest(command.getGraduationDest());
         user.setResume(command.getResume());
@@ -205,7 +213,7 @@ public class LabUserCrudApplicationService {
 
     /**
      * 修改密码
-     * 
+     *
      * @param command 修改密码命令
      */
     @Transactional(rollbackFor = Exception.class)
@@ -236,9 +244,27 @@ public class LabUserCrudApplicationService {
         labUserService.updateById(user);
     }
 
+
+    /**
+     * 管理员重置用户密码（无需旧密码）
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void resetPasswordByAdmin(ResetLabUserPasswordCommand command) {
+        LabUserEntity user = labUserService.getById(command.getUserId());
+        if (user == null) {
+            throw new ApiException(ErrorCode.Business.USER_NON_EXIST, String.valueOf(command.getUserId()));
+        }
+        user.setPassword(passwordEncoder.encode(command.getPassword()));
+        SystemLoginUser loginUser = AuthenticationUtils.getSystemLoginUser();
+        if (loginUser != null) {
+            user.setUpdaterId(loginUser.getUserId());
+        }
+        labUserService.updateById(user);
+    }
+
     /**
      * 删除用户
-     * 
+     *
      * @param userId 用户ID
      */
     @Transactional(rollbackFor = Exception.class)
@@ -248,18 +274,13 @@ public class LabUserCrudApplicationService {
             throw new ApiException(ErrorCode.Business.USER_NON_EXIST, userId.toString());
         }
 
-        // 软删除
-        user.setDeleted(true);
-        SystemLoginUser loginUser = AuthenticationUtils.getSystemLoginUser();
-        if (loginUser != null) {
-            user.setUpdaterId(loginUser.getUserId());
-        }
-        labUserService.updateById(user);
+        // 硬删除（绕过逻辑删除）
+        labUserService.hardDeleteById(userId);
     }
 
     /**
      * 分页查询用户列表
-     * 
+     *
      * @param query 查询条件
      * @return 分页结果
      */
@@ -277,7 +298,7 @@ public class LabUserCrudApplicationService {
 
     /**
      * 搜索用户
-     * 
+     *
      * @param keyword 关键词
      * @return 用户列表
      */

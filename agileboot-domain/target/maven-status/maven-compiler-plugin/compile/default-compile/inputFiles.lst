@@ -41,7 +41,9 @@
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/system/menu/db/SysMenuService.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/system/dept/model/DeptModelFactory.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/system/log/db/SysLoginInfoService.java
+/Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/lab/user/command/ResetLabUserPasswordCommand.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/system/menu/model/MenuModelFactory.java
+/Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/lab/user/dto/PublicLabUserDTO.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/system/user/dto/UserDetailDTO.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/system/role/db/SysRoleEntity.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/system/monitor/dto/JvmInfo.java
@@ -101,6 +103,7 @@
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/system/notice/db/SysNoticeService.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/system/role/dto/RoleDTO.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/system/role/command/UpdateDataScopeCommand.java
+/Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/lab/achievement/db/LabAchievementEntity.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/system/config/dto/ConfigDTO.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/lab/user/LabUserPermissionChecker.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/common/cache/CacheCenter.java

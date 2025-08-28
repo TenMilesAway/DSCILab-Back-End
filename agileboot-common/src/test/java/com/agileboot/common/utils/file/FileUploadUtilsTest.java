@@ -114,6 +114,7 @@ class FileUploadUtilsTest {
 
         String fileAbsolutePath = FileUploadUtils.getFileAbsolutePath(UploadSubDir.AVATAR_PATH, "test.jpg");
 
-        Assertions.assertEquals("D:\\agileboot\\profile\\avatar\\test.jpg", fileAbsolutePath);
+        String expected = "D:\\agileboot" + java.io.File.separator + "profile" + java.io.File.separator + "avatar" + java.io.File.separator + "test.jpg";
+        Assertions.assertEquals(expected, fileAbsolutePath);
     }
 }

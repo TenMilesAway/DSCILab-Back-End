@@ -26,6 +26,7 @@ com/agileboot/admin/controller/system/MonitorController.class
 com/agileboot/admin/controller/common/LoginController.class
 com/agileboot/admin/customize/service/permission/DataPermissionCheckerFactory.class
 com/agileboot/admin/customize/service/permission/model/checker/OnlySelfDataPermissionChecker.class
+com/agileboot/admin/controller/open/OpenLabController.class
 com/agileboot/admin/customize/service/permission/model/checker/CustomDataPermissionChecker.class
 com/agileboot/admin/controller/system/SysPostController.class
 com/agileboot/admin/customize/service/login/command/LoginCommand.class

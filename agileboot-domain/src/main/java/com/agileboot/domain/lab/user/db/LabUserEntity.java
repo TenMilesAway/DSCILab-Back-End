@@ -1,10 +1,7 @@
 package com.agileboot.domain.lab.user.db;
 
 import com.agileboot.common.core.base.BaseEntity;
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.*;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
@@ -14,7 +11,7 @@ import java.time.Year;
 
 /**
  * 实验室用户信息表
- * 
+ *
  * @author agileboot
  */
 @Getter
@@ -30,7 +27,7 @@ public class LabUserEntity extends BaseEntity<LabUserEntity> {
     private Long id;
 
     @Schema(description = "学号/工号")
-    @TableField("student_number")
+    @TableField(value = "student_number", insertStrategy = FieldStrategy.NOT_EMPTY, updateStrategy = FieldStrategy.NOT_EMPTY)
     private String studentNumber;
 
     @Schema(description = "登录用户名")
@@ -66,11 +63,11 @@ public class LabUserEntity extends BaseEntity<LabUserEntity> {
     private String researchArea;
 
     @Schema(description = "手机号")
-    @TableField("phone")
+    @TableField(value = "phone", insertStrategy = FieldStrategy.NOT_EMPTY, updateStrategy = FieldStrategy.NOT_EMPTY)
     private String phone;
 
     @Schema(description = "邮箱")
-    @TableField("email")
+    @TableField(value = "email", insertStrategy = FieldStrategy.NOT_EMPTY, updateStrategy = FieldStrategy.NOT_EMPTY)
     private String email;
 
     @Schema(description = "状态：1=在读/在职,2=毕业/离职")

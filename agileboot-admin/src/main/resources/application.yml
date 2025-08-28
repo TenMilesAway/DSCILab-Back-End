@@ -44,3 +44,5 @@ springdoc:
       packages-to-scan: com.agileboot.admin.controller.system
     - group: '实验室管理API'
       packages-to-scan: com.agileboot.admin.controller.lab
+    - group: '开放接口'
+      packages-to-scan: com.agileboot.admin.controller.open

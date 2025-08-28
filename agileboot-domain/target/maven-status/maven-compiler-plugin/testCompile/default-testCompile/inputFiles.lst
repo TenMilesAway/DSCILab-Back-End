@@ -1,0 +1,15 @@
+/Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/test/java/com/agileboot/integrationTest/db/SysConfigServiceImplTest.java
+/Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/test/java/com/agileboot/integrationTest/db/SysPostServiceImplTest.java
+/Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/test/java/com/agileboot/domain/system/notice/model/NoticeModelTest.java
+/Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/test/java/com/agileboot/domain/system/menu/model/MenuModelTest.java
+/Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/test/java/com/agileboot/domain/system/dept/model/DeptModelTest.java
+/Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/test/java/com/agileboot/domain/system/role/model/RoleModelTest.java
+/Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/test/java/com/agileboot/domain/system/config/model/ConfigModelTest.java
+/Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/test/java/com/agileboot/integrationTest/IntegrationTestApplication.java
+/Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/test/java/com/agileboot/integrationTest/db/SysMenuServiceImplTest.java
+/Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/test/java/com/agileboot/domain/system/post/model/PostModelTest.java
+/Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/test/java/com/agileboot/domain/system/user/model/UserModelTest.java
+/Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/test/java/com/agileboot/integrationTest/db/SysDeptServiceImplTest.java
+/Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/test/java/com/agileboot/integrationTest/db/SysUserServiceImplTest.java
+/Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/test/java/com/agileboot/domain/system/monitor/dto/ServerInfoTest.java
+/Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/test/java/com/agileboot/integrationTest/db/SysRoleServiceImplTest.java

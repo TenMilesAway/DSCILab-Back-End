@@ -13,6 +13,7 @@ com/agileboot/domain/system/post/query/PostQuery.class
 com/agileboot/domain/system/dept/db/SysDeptServiceImpl.class
 com/agileboot/domain/common/cache/RedisCacheService.class
 com/agileboot/domain/system/role/command/AddRoleCommand.class
+com/agileboot/domain/lab/user/dto/PublicLabUserDTO.class
 com/agileboot/domain/system/menu/db/SysMenuServiceImpl.class
 com/agileboot/domain/system/monitor/dto/MemoryInfo.class
 com/agileboot/domain/common/cache/MapCache.class
@@ -32,6 +33,7 @@ com/agileboot/domain/system/post/PostApplicationService.class
 com/agileboot/domain/system/notice/db/SysNoticeEntity.class
 com/agileboot/domain/system/user/command/UpdateProfileCommand.class
 com/agileboot/domain/system/menu/db/SysMenuMapper.class
+com/agileboot/domain/lab/user/command/ResetLabUserPasswordCommand.class
 com/agileboot/domain/system/user/command/UpdateUserCommand.class
 com/agileboot/domain/system/menu/MenuApplicationService.class
 com/agileboot/domain/system/log/db/SysLoginInfoMapper.class
@@ -152,5 +154,6 @@ com/agileboot/domain/common/dto/TokenDTO.class
 com/agileboot/domain/common/dto/UploadDTO.class
 com/agileboot/domain/system/role/db/SysRoleMapper.class
 com/agileboot/domain/system/monitor/dto/RedisCacheInfoDTO.class
+com/agileboot/domain/lab/achievement/db/LabAchievementEntity.class
 com/agileboot/domain/system/role/command/UpdateStatusCommand.class
 com/agileboot/domain/common/command/BulkOperationCommand.class

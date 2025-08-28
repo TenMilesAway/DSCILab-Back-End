@@ -43,7 +43,6 @@ com/agileboot/common/exception/error/ErrorCodeInterface.class
 com/agileboot/common/utils/ip/OnlineIpRegionUtil.class
 com/agileboot/common/enums/BasicEnum.class
 com/agileboot/common/utils/ip/IpUtil.class
-META-INF/spring-configuration-metadata.json
 com/agileboot/common/enums/BasicEnumUtil.class
 com/agileboot/common/core/page/AbstractPageQuery.class
 com/agileboot/common/annotation/ExcelSheet.class

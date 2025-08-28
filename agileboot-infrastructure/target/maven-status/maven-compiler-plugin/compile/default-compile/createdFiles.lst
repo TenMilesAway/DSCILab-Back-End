@@ -10,6 +10,7 @@ com/agileboot/infrastructure/config/MyBatisConfig.class
 com/agileboot/infrastructure/WarDeploymentInitializer.class
 com/agileboot/infrastructure/annotations/unrepeatable/Unrepeatable$CheckType$2.class
 com/agileboot/infrastructure/schedule/ScheduleJobManager.class
+com/agileboot/infrastructure/config/StaticDocsConfig.class
 com/agileboot/infrastructure/config/captcha/CaptchaMathTextCreator$Operand.class
 com/agileboot/infrastructure/config/SpringDocConfig.class
 com/agileboot/infrastructure/cache/redis/CacheKeyEnum.class
@@ -61,6 +62,7 @@ com/agileboot/infrastructure/config/FilterConfig.class
 com/agileboot/infrastructure/exception/GlobalExceptionFilter.class
 com/agileboot/infrastructure/cache/redis/RedisCacheTemplate.class
 com/agileboot/infrastructure/config/captcha/CaptchaMathTextCreator.class
+com/agileboot/infrastructure/cache/aop/package-info.class
 com/agileboot/infrastructure/config/ApplicationConfig.class
 com/agileboot/infrastructure/user/web/SystemLoginUser.class
 com/agileboot/infrastructure/config/GlobalTransactionConfig.class

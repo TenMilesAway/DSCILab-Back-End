@@ -10,6 +10,7 @@
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-admin/src/main/java/com/agileboot/admin/customize/aop/accessLog/AccessLogAspect.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-admin/src/main/java/com/agileboot/admin/customize/service/login/command/LoginCommand.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-admin/src/main/java/com/agileboot/admin/customize/service/permission/model/checker/DeptTreeDataPermissionChecker.java
+/Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-admin/src/main/java/com/agileboot/admin/controller/open/OpenLabController.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-admin/src/main/java/com/agileboot/admin/customize/service/login/dto/CaptchaDTO.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-admin/src/main/java/com/agileboot/admin/controller/system/SysProfileController.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-admin/src/main/java/com/agileboot/admin/controller/lab/LabUserCrudController.java
