@@ -14,6 +14,18 @@
 Authorization: Bearer {your_jwt_token}
 ```
 
+### 统一登录说明（重要）
+- 统一登录入口：`POST /login`
+- 登录协议：沿用系统后台的协议（前端使用 RSA 公钥加密密码后 Base64，后端解密后进行 BCrypt 校验；是否启用验证码以配置为准）
+- 用户来源：
+  1) 先按 `sys_user` 查询；若不存在，则按 `lab_user` 查询
+  2) `lab_user` 登录要求：`is_active=true` 且 `deleted=false`，密码为 BCrypt 存储
+- 权限与数据范围：
+  - 对于 `lab_user.identity=1`（管理员）：授予 admin 全权限（`*:*:*`），数据范围 `ALL`
+  - 对于普通 `lab_user`（identity≠1）：数据范围 `ONLY_SELF`，并默认授予只读权限集：`lab:user:query`、`lab:user:list`
+- 旧的 `/lab/auth/login` 已废弃，请统一改用 `/login`
+
+
 ## 🎯 核心接口列表
 
 ### 🔍 查询接口

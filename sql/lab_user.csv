@@ -1,0 +1,5 @@
+"id","student_number","username","real_name","english_name","password","gender","identity","academic_status","research_area","phone","email","status","enrollment_year","graduation_year","graduation_dest","photo","resume","homepage_url","orcid","is_active","creator_id","create_time","updater_id","update_time","deleted"
+"1","2021001","admin","1111","","$2a$10$7JB720yubVSOfvVWdBYoOe.PuiKloYAjYcGpVFurpKhS6gqpHxYw6","1","1",,"","17803907608","","1","2020",,"",,"","","","1",,"26/8/2025 06:57:56","1","29/8/2025 14:25:22","0"
+"2","2021002","prof_zhang","å¼ æ•™æŽˆ","Prof. Zhang","$2a$10$7JB720yubVSOfvVWdBYoOe.PuiKloYAjYcGpVFurpKhS6gqpHxYw6","1","2","1","äººå·¥æ™ºèƒ½,æœºå™¨å­¦ä¹ ","13800000002","zhang@lab.edu","1","2015",,,,,,,"1",,"26/8/2025 06:57:56","1","28/8/2025 14:21:38","0"
+"12","","111","111","","$2a$10$u/db0LhZDkLfZzp3merJVOBmnFtFE7OSNK2F7RwJTp/9dTVTVvud.","0","3",,"","","ayanyeah@163.com","1",,,"",,"","","","1","1","28/8/2025 20:04:00",,"28/8/2025 12:03:59","0"
+"17",,"222","222","","$2a$10$vaE2kzDtEe4SzpLiYroUjujOR3txwdJj2pcejr9c.0VHFI/s6lPCG","0","2",,"",,,"1",,,"",,"","","","1","1","29/8/2025 11:21:53",,"29/8/2025 03:21:52","0"

@@ -14,8 +14,7 @@ import javax.validation.constraints.Size;
 @Schema(description = "管理员重置实验室用户密码命令")
 public class ResetLabUserPasswordCommand {
 
-    @Schema(description = "用户ID", required = true)
-    @NotNull(message = "用户ID不能为空")
+    @Schema(description = "用户ID（由路径参数提供）")
     private Long userId;
 
     @Schema(description = "新密码（与创建用户时要求一致：6-20 位）", required = true)
