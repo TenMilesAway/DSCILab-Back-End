@@ -9,7 +9,7 @@ import java.time.Year;
 
 /**
  * 实验室用户个人信息DTO
- * 
+ *
  * @author agileboot
  */
 @Data
@@ -44,7 +44,7 @@ public class LabUserProfileDTO {
     @Schema(description = "身份描述")
     private String identityDesc;
 
-    @Schema(description = "学术身份：1=教授,2=副教授,3=讲师,4=博士,5=硕士")
+    @Schema(description = "学术身份：0=实验室负责人,1=教授,2=副教授,3=讲师,4=博士,5=硕士,6=本科")
     private Integer academicStatus;
 
     @Schema(description = "学术身份描述")
@@ -117,13 +117,13 @@ public class LabUserProfileDTO {
             this.homepageUrl = entity.getHomepageUrl();
             this.orcid = entity.getOrcid();
             this.isActive = entity.getIsActive();
-            
+
             // 设置描述信息
             this.genderDesc = getGenderDesc(this.gender);
             this.identityDesc = getIdentityDesc(this.identity);
             this.academicStatusDesc = getAcademicStatusDesc(this.academicStatus);
             this.statusDesc = getStatusDesc(this.status);
-            
+
             // 格式化时间
             if (entity.getCreateTime() != null) {
                 this.createTime = entity.getCreateTime().toString();

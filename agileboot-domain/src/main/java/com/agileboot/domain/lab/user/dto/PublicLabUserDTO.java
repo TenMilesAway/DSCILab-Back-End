@@ -37,6 +37,9 @@ public class PublicLabUserDTO {
     @Schema(description = "毕业/离职年份")
     private Year graduationYear;
 
+    @Schema(description = "毕业去向")
+    private String graduationDest;
+
     @Schema(description = "照片路径")
     private String photo;
 
@@ -59,6 +62,7 @@ public class PublicLabUserDTO {
         dto.setResearchArea(e.getResearchArea());
         dto.setEnrollmentYear(e.getEnrollmentYear());
         dto.setGraduationYear(e.getGraduationYear());
+        dto.setGraduationDest(e.getGraduationDest());
         dto.setPhoto(e.getPhoto());
         dto.setHomepageUrl(e.getHomepageUrl());
         dto.setEmail(e.getEmail());

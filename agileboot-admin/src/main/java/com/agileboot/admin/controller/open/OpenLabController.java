@@ -39,7 +39,7 @@ public class OpenLabController extends BaseController {
     @GetMapping("/users")
     public ResponseEntity<ResponseDTO<PageDTO<PublicLabUserDTO>>> listPublicUsers(
             @Parameter(description = "页码", example = "1") @RequestParam(defaultValue = "1") int pageNum,
-            @Parameter(description = "每页大小", example = "10") @RequestParam(defaultValue = "10") int pageSize,
+            @Parameter(description = "每页大小", example = "100") @RequestParam(defaultValue = "1000") int pageSize,
             @Parameter(description = "身份：1=管理员,2=教师,3=学生") @RequestParam(required = false) Integer identity,
             @Parameter(description = "学术身份：1..5") @RequestParam(required = false) Integer academicStatus,
             @Parameter(description = "关键词（姓名/英文名/研究方向）") @RequestParam(required = false) String keyword
@@ -56,6 +56,7 @@ public class OpenLabController extends BaseController {
               LabUserEntity::getResearchArea,
               LabUserEntity::getEnrollmentYear,
               LabUserEntity::getGraduationYear,
+              LabUserEntity::getGraduationDest,
               LabUserEntity::getPhoto,
               LabUserEntity::getHomepageUrl,
               LabUserEntity::getEmail,

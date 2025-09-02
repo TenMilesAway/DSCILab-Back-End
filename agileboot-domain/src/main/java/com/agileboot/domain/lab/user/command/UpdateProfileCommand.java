@@ -29,9 +29,9 @@ public class UpdateProfileCommand {
     @Max(value = 2, message = "性别值必须在0-2之间")
     private Integer gender;
 
-    @Schema(description = "学术身份：1=教授,2=副教授,3=讲师,4=博士,5=硕士")
-    @Min(value = 1, message = "学术身份值必须在1-5之间")
-    @Max(value = 5, message = "学术身份值必须在1-5之间")
+    @Schema(description = "学术身份：0=实验室负责人,1=教授,2=副教授,3=讲师,4=博士,5=硕士,6=本科")
+    @Min(value = 0, message = "学术身份值必须在0-6之间")
+    @Max(value = 6, message = "学术身份值必须在0-6之间")
     private Integer academicStatus;
 
     @Schema(description = "研究方向")

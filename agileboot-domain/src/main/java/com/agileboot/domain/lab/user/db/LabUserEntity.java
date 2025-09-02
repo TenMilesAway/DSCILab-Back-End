@@ -54,7 +54,7 @@ public class LabUserEntity extends BaseEntity<LabUserEntity> {
     @TableField("identity")
     private Integer identity;
 
-    @Schema(description = "学术身份：1=教授,2=副教授,3=讲师,4=博士,5=硕士")
+    @Schema(description = "学术身份：0=实验室负责人,1=教授,2=副教授,3=讲师,4=博士,5=硕士,6=本科")
     @TableField("academic_status")
     private Integer academicStatus;
 
@@ -140,11 +140,13 @@ public class LabUserEntity extends BaseEntity<LabUserEntity> {
      * 学术身份枚举
      */
     public enum AcademicStatus {
+        HEAD(0, "实验室负责人"),
         PROFESSOR(1, "教授"),
         ASSOCIATE_PROFESSOR(2, "副教授"),
         LECTURER(3, "讲师"),
         PHD(4, "博士"),
-        MASTER(5, "硕士");
+        MASTER(5, "硕士"),
+        BACHELOR(6, "本科");
 
         private final Integer code;
         private final String desc;

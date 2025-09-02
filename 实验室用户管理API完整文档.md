@@ -120,7 +120,7 @@ interface UserListQuery {
   realName?: string;        // 真实姓名筛选
   englishName?: string;     // 英文名筛选
   identity?: number;        // 身份筛选：1=管理员,2=教师,3=学生
-  academicStatus?: number;  // 学术身份筛选：1=教授,2=副教授,3=讲师,4=博士,5=硕士
+  academicStatus?: number;  // 学术身份筛选：0=实验室负责人,1=教授,2=副教授,3=讲师,4=博士,5=硕士,6=本科
   gender?: number;          // 性别筛选：0=未知,1=男,2=女
   status?: number;          // 状态筛选：1=在读/在职,2=毕业/离职
   isActive?: boolean;       // 是否启用
@@ -332,7 +332,7 @@ interface CreateUserRequest {
   password: string;          // 密码（必填，6-20位）
   gender?: number;           // 性别：0=未知,1=男,2=女
   identity: number;          // 身份（必填）：1=管理员,2=教师,3=学生
-  academicStatus?: number;   // 学术身份：1=教授,2=副教授,3=讲师,4=博士,5=硕士
+  academicStatus?: number;   // 学术身份：0=实验室负责人,1=教授,2=副教授,3=讲师,4=博士,5=硕士,6=本科
   researchArea?: string;     // 研究方向
   phone?: string;            // 手机号
   email?: string;            // 邮箱
@@ -389,7 +389,7 @@ interface UpdateProfileRequest {
   realName: string;           // 真实姓名（必填）
   englishName?: string;       // 英文名
   gender?: number;            // 性别
-  academicStatus?: number;    // 学术身份
+  academicStatus?: number;    // 学术身份：0=实验室负责人,1=教授,2=副教授,3=讲师,4=博士,5=硕士,6=本科
   researchArea?: string;      // 研究方向
   phone?: string;             // 手机号
   email?: string;             // 邮箱
@@ -477,7 +477,7 @@ interface UpdateUserRequest {
 
   // 身份和状态（管理员特有权限）
   identity?: number;          // 身份：1=管理员,2=教师,3=学生
-  academicStatus?: number;    // 学术身份：1=教授,2=副教授,3=讲师,4=博士,5=硕士
+  academicStatus?: number;    // 学术身份：0=实验室负责人,1=教授,2=副教授,3=讲师,4=博士,5=硕士,6=本科
   status?: number;            // 状态：1=在读/在职,2=毕业/离职
   isActive?: boolean;         // 账号是否启用
 
@@ -651,10 +651,13 @@ curl -X DELETE "http://localhost:8080/lab/users/crud/batch" \
 - `3`: 学生
 
 ### 学术身份 (academicStatus)
+- `0`: 实验室负责人
 - `1`: 教授
 - `2`: 副教授
 - `3`: 讲师
 - `4`: 博士
+- `5`: 硕士
+- `6`: 本科
 - `5`: 硕士
 
 ### 状态 (status)
