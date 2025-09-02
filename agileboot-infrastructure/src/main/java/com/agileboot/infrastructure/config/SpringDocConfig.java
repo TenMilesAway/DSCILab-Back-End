@@ -18,12 +18,12 @@ public class SpringDocConfig {
     public OpenAPI agileBootApi() {
         return new OpenAPI()
             .info(new Info().title("Agileboot后台管理系统")
-                .description("Agileboot API 演示")
+                .description("登录 /login 现同时支持 sys_user 与 lab_user：按用户名先查 sys_user，若无再查 lab_user；lab_user.identity=1 视为管理员，全权限；否则为只读实验室权限。")
                 .version("v1.8.0")
                 .license(new License().name("MIT 3.0").url("https://github.com/valarchie/AgileBoot-Back-End")))
             .externalDocs(new ExternalDocumentation()
-                .description("Agileboot后台管理系统接口文档")
-                .url("https://juejin.cn/column/7159946528827080734"));
+                .description("实验室用户管理API完整文档（Markdown）")
+                .url("/实验室用户管理API完整文档.md"));
     }
 
 }

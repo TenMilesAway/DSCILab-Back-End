@@ -201,11 +201,15 @@ public class LoginService {
         ThreadPoolManager.execute(AsyncTaskFactory.loginInfoTask(loginUser.getUsername(), LoginStatusEnum.LOGIN_SUCCESS,
             LoginStatusEnum.LOGIN_SUCCESS.description()));
 
+        // 统一登录后，这里可能是 sys_user 或 lab_user。
+        // 仅当当前userId能在 sys_user 表查到时，才更新 sys_user 登录信息；
+        // 对于 lab_user（无对应 sys_user 记录）直接跳过DB更新，避免NPE。
         SysUserEntity entity = redisCache.userCache.getObjectById(loginUser.getUserId());
-
-        entity.setLoginIp(ServletUtil.getClientIP(ServletHolderUtil.getRequest()));
-        entity.setLoginDate(DateUtil.date());
-        entity.updateById();
+        if (entity != null) {
+            entity.setLoginIp(ServletUtil.getClientIP(ServletHolderUtil.getRequest()));
+            entity.setLoginDate(DateUtil.date());
+            entity.updateById();
+        }
     }
 
     public String decryptPassword(String originalPassword) {

@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.agileboot.domain.lab.user.db.LabUserMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.agileboot.domain.lab.user.db.LabUserEntity">
+        <id column="id" property="id" />
+        <result column="student_number" property="studentNumber" />
+        <result column="username" property="username" />
+        <result column="real_name" property="realName" />
+        <result column="english_name" property="englishName" />
+        <result column="password" property="password" />
+        <result column="gender" property="gender" />
+        <result column="identity" property="identity" />
+        <result column="academic_status" property="academicStatus" />
+        <result column="research_area" property="researchArea" />
+        <result column="phone" property="phone" />
+        <result column="email" property="email" />
+        <result column="status" property="status" />
+        <result column="enrollment_year" property="enrollmentYear" />
+        <result column="graduation_year" property="graduationYear" />
+        <result column="graduation_dest" property="graduationDest" />
+        <result column="photo" property="photo" />
+        <result column="resume" property="resume" />
+        <result column="homepage_url" property="homepageUrl" />
+        <result column="orcid" property="orcid" />
+        <result column="is_active" property="isActive" />
+        <result column="creator_id" property="creatorId" />
+        <result column="create_time" property="createTime" />
+        <result column="updater_id" property="updaterId" />
+        <result column="update_time" property="updateTime" />
+        <result column="deleted" property="deleted" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, student_number, username, real_name, english_name, password, gender, identity, 
+        academic_status, research_area, phone, email, status, enrollment_year, graduation_year, 
+        graduation_dest, photo, resume, homepage_url, orcid, is_active, creator_id, create_time, 
+        updater_id, update_time, deleted
+    </sql>
+
+    <!-- 根据用户名查询用户 -->
+    <select id="selectByUsername" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM lab_user
+        WHERE username = #{username}
+        AND deleted = 0
+        AND is_active = 1
+    </select>
+
+    <!-- 根据学号/工号查询用户 -->
+    <select id="selectByStudentNumber" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM lab_user
+        WHERE student_number = #{studentNumber}
+        AND deleted = 0
+        AND is_active = 1
+    </select>
+
+    <!-- 根据邮箱查询用户 -->
+    <select id="selectByEmail" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM lab_user
+        WHERE email = #{email}
+        AND deleted = 0
+        AND is_active = 1
+    </select>
+
+    <!-- 根据手机号查询用户 -->
+    <select id="selectByPhone" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM lab_user
+        WHERE phone = #{phone}
+        AND deleted = 0
+        AND is_active = 1
+    </select>
+
+    <!-- 检查用户名是否存在 -->
+    <select id="existsByUsername" resultType="boolean">
+        SELECT COUNT(1) > 0
+        FROM lab_user
+        WHERE username = #{username}
+        AND deleted = 0
+        <if test="excludeId != null">
+            AND id != #{excludeId}
+        </if>
+    </select>
+
+    <!-- 检查学号/工号是否存在 -->
+    <select id="existsByStudentNumber" resultType="boolean">
+        SELECT COUNT(1) > 0
+        FROM lab_user
+        WHERE student_number = #{studentNumber}
+        AND deleted = 0
+        <if test="excludeId != null">
+            AND id != #{excludeId}
+        </if>
+    </select>
+
+    <!-- 检查邮箱是否存在 -->
+    <select id="existsByEmail" resultType="boolean">
+        SELECT COUNT(1) > 0
+        FROM lab_user
+        WHERE email = #{email}
+        AND deleted = 0
+        <if test="excludeId != null">
+            AND id != #{excludeId}
+        </if>
+    </select>
+
+    <!-- 检查手机号是否存在 -->
+    <select id="existsByPhone" resultType="boolean">
+        SELECT COUNT(1) > 0
+        FROM lab_user
+        WHERE phone = #{phone}
+        AND deleted = 0
+        <if test="excludeId != null">
+            AND id != #{excludeId}
+        </if>
+    </select>
+
+    <!-- 根据身份统计用户数量 -->
+    <select id="countByIdentity" resultType="java.util.Map">
+        SELECT 
+            identity,
+            COUNT(*) as count,
+            CASE 
+                WHEN identity = 1 THEN '管理员'
+                WHEN identity = 2 THEN '教师'
+                WHEN identity = 3 THEN '学生'
+                ELSE '未知'
+            END as identityDesc
+        FROM lab_user
+        WHERE deleted = 0
+        GROUP BY identity
+        ORDER BY identity
+    </select>
+
+    <!-- 根据学术身份统计用户数量 -->
+    <select id="countByAcademicStatus" resultType="java.util.Map">
+        SELECT 
+            academic_status,
+            COUNT(*) as count,
+            CASE 
+                WHEN academic_status = 1 THEN '教授'
+                WHEN academic_status = 2 THEN '副教授'
+                WHEN academic_status = 3 THEN '讲师'
+                WHEN academic_status = 4 THEN '博士'
+                WHEN academic_status = 5 THEN '硕士'
+                ELSE '未设置'
+            END as academicStatusDesc
+        FROM lab_user
+        WHERE deleted = 0 AND academic_status IS NOT NULL
+        GROUP BY academic_status
+        ORDER BY academic_status
+    </select>
+
+    <!-- 根据状态统计用户数量 -->
+    <select id="countByStatus" resultType="java.util.Map">
+        SELECT 
+            status,
+            COUNT(*) as count,
+            CASE 
+                WHEN status = 1 THEN '在读/在职'
+                WHEN status = 2 THEN '毕业/离职'
+                ELSE '未知'
+            END as statusDesc
+        FROM lab_user
+        WHERE deleted = 0
+        GROUP BY status
+        ORDER BY status
+    </select>
+
+</mapper>

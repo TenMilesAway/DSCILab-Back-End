@@ -1,50 +1,30 @@
-######################################################################
-# Build Tools
+node_modules
+.DS_Store
+dist
+dist-ssr
+*.local
+.eslintcache
+report.html
 
-.gradle
-/build/
-!gradle/wrapper/gradle-wrapper.jar
+yarn.lock
+npm-debug.log*
+.pnpm-error.log*
+.pnpm-debug.log
+tests/**/coverage/
 
-target/
-!.mvn/wrapper/maven-wrapper.jar
+# 本机调试debug配置文件
+.vscode/launch.json
 
-######################################################################
-# IDE
-
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-
-### IntelliJ IDEA ###
+# Editor directories and files
 .idea
-*.iws
-*.iml
-*.ipr
-
-### JRebel ###
-rebel.xml
-
-### NetBeans ###
-nbproject/private/
-build/*
-nbbuild/
-dist/
-nbdist/
-.nb-gradle/
-
-######################################################################
-# Others
-*.log
-*.xml.versionsBackup
-*.swp
-
-!*/build/*.java
-!*/build/*.html
-!*/build/*.xml
-
-/agileboot-admin/src/main/resources/application-prod.yml
-
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+tsconfig.tsbuildinfo/target/
+*.jar
+/target/
+/target/
+/target/
+/target/
+/target/

@@ -33,7 +33,7 @@
         <velocity.version>2.3</velocity.version>
         <jwt.version>0.9.1</jwt.version>
         <hutool.version>5.7.22</hutool.version>
-        <lombok.version>1.18.30</lombok.version>
+        <lombok.version>1.18.36</lombok.version>
         <mybatis-plus.version>3.5.2</mybatis-plus.version>
         <mybatis-plus-generator.version>3.5.1</mybatis-plus-generator.version>
         <it.ozimov.version>0.7.3</it.ozimov.version>
@@ -43,7 +43,7 @@
         <springdoc-openapi-ui.version>1.6.14</springdoc-openapi-ui.version>
         <mysql-connector-java>8.0.31</mysql-connector-java>
         <spring.boot.version>2.7.10</spring.boot.version>
-        <maven.compiler.plugin.version>3.1</maven.compiler.plugin.version>
+        <maven.compiler.plugin.version>3.11.0</maven.compiler.plugin.version>
         <!-- 升级版本以支持junit5 -->
         <maven.surefire.plugin.version>3.0.0-M7</maven.surefire.plugin.version>
         <maven.war.plugin.version>3.1.0</maven.war.plugin.version>
@@ -343,15 +343,22 @@
                         <source>${java.version}</source>
                         <target>${java.version}</target>
                         <encoding>${project.build.sourceEncoding}</encoding>
+                        <annotationProcessorPaths>
+                            <path>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                                <version>${lombok.version}</version>
+                            </path>
+                        </annotationProcessorPaths>
                     </configuration>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>${maven.surefire.plugin.version}</version>
-                    <!-- 想跑test的话  设置成false  -->
+                    <!-- 运行所有模块测试 -->
                     <configuration>
-                        <skipTests>true</skipTests>
+                        <skipTests>false</skipTests>
                     </configuration>
                 </plugin>
                 <plugin>
@@ -371,6 +378,19 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven.compiler.plugin.version}</version>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                    <encoding>${project.build.sourceEncoding}</encoding>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

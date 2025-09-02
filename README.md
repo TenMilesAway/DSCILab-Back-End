@@ -1,10 +1,23 @@
-#### 安装好Mysql和Redis
+### 开发环境
 
-#### 前端启动
-详细步骤请查看对应前端部分
+Node.js 版本要求：16.0+
+pnpm 版本要求：6.0+
+
+优先选择 node=16, pnpm=7.30.5的环境.
+
 
 ```
-1. pnpm install
+npm install -g pnpm
+```
 
-2. pnpm run dev
+安装依赖
+
+```
+pnpm install
+```
+
+启动平台
+
+```
+pnpm run dev
 ```
