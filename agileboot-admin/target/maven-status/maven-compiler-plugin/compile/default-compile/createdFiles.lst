@@ -8,6 +8,7 @@ com/agileboot/admin/controller/system/SysConfigController.class
 com/agileboot/admin/customize/async/AsyncTaskFactory.class
 com/agileboot/admin/controller/system/SysDeptController.class
 com/agileboot/admin/controller/lab/LabUserController.class
+com/agileboot/admin/controller/lab/LabDictController.class
 com/agileboot/admin/controller/system/SysProfileController.class
 com/agileboot/admin/customize/service/login/TokenService.class
 com/agileboot/admin/controller/system/SysRoleController.class
@@ -35,6 +36,7 @@ com/agileboot/admin/customize/config/SecurityConfig.class
 com/agileboot/admin/controller/system/SysNoticeController.class
 com/agileboot/admin/controller/system/SysLogsController.class
 com/agileboot/admin/customize/service/login/LoginService.class
+com/agileboot/admin/controller/lab/LabDictController$DictItem.class
 com/agileboot/admin/controller/system/SysMenuController.class
 com/agileboot/admin/customize/service/permission/model/checker/AllDataPermissionChecker.class
 com/agileboot/admin/customize/service/permission/DataPermissionCheckerFactory$1.class

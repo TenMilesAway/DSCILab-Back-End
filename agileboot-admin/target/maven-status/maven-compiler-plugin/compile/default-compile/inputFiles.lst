@@ -20,6 +20,7 @@
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-admin/src/main/java/com/agileboot/admin/customize/service/permission/model/checker/OnlySelfDataPermissionChecker.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-admin/src/main/java/com/agileboot/admin/customize/service/login/LoginService.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-admin/src/main/java/com/agileboot/admin/customize/aop/accessLog/OperationLogModel.java
+/Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-admin/src/main/java/com/agileboot/admin/controller/lab/LabDictController.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-admin/src/main/java/com/agileboot/admin/controller/system/SysUserController.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-admin/src/main/java/com/agileboot/admin/controller/system/SysNoticeController.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-admin/src/main/java/com/agileboot/admin/controller/system/SysLogsController.java
