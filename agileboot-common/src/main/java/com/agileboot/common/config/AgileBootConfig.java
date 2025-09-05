@@ -56,6 +56,11 @@ public class AgileBootConfig {
      */
     private static String rsaPrivateKey;
 
+    /**
+     * 是否启用RSA密码解密（dev环境可关闭）
+     */
+    private static boolean rsaEnabled = true;
+
     private static String apiPrefix;
 
     public static String getFileBaseDir() {
@@ -97,6 +102,9 @@ public class AgileBootConfig {
     public void setRsaPrivateKey(String rsaPrivateKey) {
         AgileBootConfig.rsaPrivateKey = rsaPrivateKey;
     }
+
+    public static boolean isRsaEnabled() { return rsaEnabled; }
+    public void setRsaEnabled(boolean rsaEnabled) { AgileBootConfig.rsaEnabled = rsaEnabled; }
 
     public static boolean isDemoEnabled() {
         return demoEnabled;

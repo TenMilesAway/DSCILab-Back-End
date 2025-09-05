@@ -285,11 +285,18 @@ public class LabUserCrudApplicationService {
      * @return 分页结果
      */
     public PageDTO<LabUserProfileDTO> getUserList(LabUserQuery query) {
-        Page<LabUserEntity> page = new Page<>(query.getPageNum(), query.getPageSize());
+        if (query == null) {
+            query = new LabUserQuery();
+        }
+        Page<LabUserEntity> page = query.toPage();
         IPage<LabUserEntity> result = labUserService.page(page, query.addQueryCondition());
 
-        // 转换为DTO
-        List<LabUserProfileDTO> dtoList = result.getRecords().stream()
+        // 转换为DTO（防御空records）
+        List<LabUserEntity> records = result.getRecords();
+        if (records == null) {
+            records = new ArrayList<>();
+        }
+        List<LabUserProfileDTO> dtoList = records.stream()
                 .map(LabUserProfileDTO::new)
                 .collect(Collectors.toList());
 

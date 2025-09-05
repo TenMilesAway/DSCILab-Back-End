@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: com.agileboot.infrastructure.annotations.RateLimitTypeTest
 -------------------------------------------------------------------------------
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.337 s - in com.agileboot.infrastructure.annotations.RateLimitTypeTest
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.449 s - in com.agileboot.infrastructure.annotations.RateLimitTypeTest

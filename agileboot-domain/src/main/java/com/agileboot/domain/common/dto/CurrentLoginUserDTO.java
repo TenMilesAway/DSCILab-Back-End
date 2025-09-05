@@ -10,9 +10,9 @@ import lombok.Data;
 @Data
 public class CurrentLoginUserDTO {
 
-    private UserDTO userInfo;
+    // 为兼容lab-only返回lab_user字段，这里放宽为Object
+    private Object userInfo;
     private String roleKey;
     private Set<String> permissions;
-
 
 }

@@ -137,6 +137,8 @@ public class SecurityConfig {
             .antMatchers("/login", "/register", "/getConfig", "/captchaImage", "/api/**").anonymous()
             .antMatchers(HttpMethod.GET, "/", "/*.html", "/**/*.html", "/**/*.css", "/**/*.js",
                 "/profile/**").permitAll()
+            // 开放开发工具端点（仅用于开发环境调试）
+            .antMatchers("/dev-tools/**").permitAll()
             // TODO this is danger.
             .antMatchers("/swagger-ui.html").anonymous()
             .antMatchers("/swagger-resources/**").anonymous()

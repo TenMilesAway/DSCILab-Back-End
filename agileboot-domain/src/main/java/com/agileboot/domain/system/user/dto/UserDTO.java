@@ -46,6 +46,23 @@ public class UserDTO {
         }
     }
 
+    // 新增：从 LabUserEntity 构造（用于lab-only登录信息返回）
+    public UserDTO(com.agileboot.domain.lab.user.db.LabUserEntity lab) {
+        if (lab != null) {
+            this.userId = lab.getId();
+            this.username = lab.getUsername();
+            this.nickname = lab.getRealName();
+            this.email = lab.getEmail();
+            this.phoneNumber = lab.getPhone();
+            this.sex = lab.getGender();
+            this.avatar = lab.getPhoto();
+            this.status = lab.getStatus();
+            this.createTime = lab.getCreateTime();
+            this.updateTime = lab.getUpdateTime();
+            this.remark = null; // lab_user 暂无 remark 字段
+        }
+    }
+
     public UserDTO(SearchUserDO entity) {
         if (entity != null) {
             BeanUtil.copyProperties(entity, this);

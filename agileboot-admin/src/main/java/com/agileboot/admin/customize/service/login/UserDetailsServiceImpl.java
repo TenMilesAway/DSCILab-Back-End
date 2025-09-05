@@ -51,28 +51,35 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     private final TokenService tokenService;
 
+    private final org.springframework.core.env.Environment environment;
+
     // 实验室用户服务（用于兜底，统一登录）
     private final com.agileboot.domain.lab.user.db.LabUserService labUserService;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        // 1) 先走系统用户
-        SysUserEntity userEntity = userService.getUserByUserName(username);
-        if (userEntity != null) {
-            if (!Objects.equals(UserStatusEnum.NORMAL.getValue(), userEntity.getStatus())) {
-                log.info("登录用户：{} 已被停用.", username);
-                throw new ApiException(ErrorCode.Business.USER_IS_DISABLE, username);
+        boolean useLabOnly = cn.hutool.core.convert.Convert.toBool(
+            environment.getProperty("agileboot.auth.use-lab-only"), false);
+
+        if (!useLabOnly) {
+            // 1) 先走系统用户
+            SysUserEntity userEntity = userService.getUserByUserName(username);
+            if (userEntity != null) {
+                if (!Objects.equals(UserStatusEnum.NORMAL.getValue(), userEntity.getStatus())) {
+                    log.info("登录用户：{} 已被停用.", username);
+                    throw new ApiException(ErrorCode.Business.USER_IS_DISABLE, username);
+                }
+                RoleInfo roleInfo = getRoleInfo(userEntity.getRoleId(), userEntity.getIsAdmin());
+                SystemLoginUser loginUser = new SystemLoginUser(userEntity.getUserId(), userEntity.getIsAdmin(), userEntity.getUsername(),
+                    userEntity.getPassword(), roleInfo, userEntity.getDeptId());
+                loginUser.fillLoginInfo();
+                loginUser.setAutoRefreshCacheTime(loginUser.getLoginInfo().getLoginTime()
+                    + TimeUnit.MINUTES.toMillis(tokenService.getAutoRefreshTime()));
+                return loginUser;
             }
-            RoleInfo roleInfo = getRoleInfo(userEntity.getRoleId(), userEntity.getIsAdmin());
-            SystemLoginUser loginUser = new SystemLoginUser(userEntity.getUserId(), userEntity.getIsAdmin(), userEntity.getUsername(),
-                userEntity.getPassword(), roleInfo, userEntity.getDeptId());
-            loginUser.fillLoginInfo();
-            loginUser.setAutoRefreshCacheTime(loginUser.getLoginInfo().getLoginTime()
-                + TimeUnit.MINUTES.toMillis(tokenService.getAutoRefreshTime()));
-            return loginUser;
         }
 
-        // 2) 兜底：实验室用户（lab_user）
+        // 实验室用户（lab_user）
         com.agileboot.domain.lab.user.db.LabUserEntity lab = labUserService.getByUsername(username);
         if (lab == null || Boolean.TRUE.equals(lab.getDeleted()) || Boolean.FALSE.equals(lab.getIsActive())) {
             log.info("登录用户：{} 不存在或未启用(lab_user).", username);
@@ -89,9 +96,12 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             roleInfo.setRoleId(0L);
             roleInfo.setRoleKey("lab:public");
             roleInfo.setDataScope(com.agileboot.infrastructure.user.web.DataScopeEnum.ONLY_SELF);
-            // 为lab普通成员注入只读权限（示例：lab用户查询）
+            // 为lab普通成员注入权限（用户管理 + 成果管理）
             roleInfo.setMenuPermissions(new java.util.HashSet<>(java.util.Arrays.asList(
-                "lab:user:query", "lab:user:list"
+                // 用户管理权限
+                "lab:user:query", "lab:user:list",
+                // 成果管理权限
+                "lab:achievement:query", "lab:achievement:list", "lab:achievement:add", "lab:achievement:edit"
             )));
         }
         roleInfo.setRoleName(isAdmin ? "ADMIN" : "LAB_PUBLIC");

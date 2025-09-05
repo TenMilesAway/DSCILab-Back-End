@@ -29,7 +29,15 @@ agileboot:
   embedded:
     mysql: false
     redis: false
+  auth:
+    use-lab-only: true
 
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    table: flyway_schema_history
 
 
 springdoc:

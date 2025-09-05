@@ -77,9 +77,27 @@ spring:
                 # #连接池最大阻塞等待时间（使用负值表示没有限制）
                 max-wait: -1ms
 
+    flyway:
+        enabled: false
+        locations: classpath:db/migration
+        baseline-on-migrate: true
+        table: flyway_schema_history
+
 logging:
     file:
         path: /tmp/logs/agileboot-dev
+
+agileboot:
+  auth:
+    use-lab-only: true
+  # 文件基路径
+  file-base-dir: /tmp/agileboot
+  # 前端url请求转发前缀
+  api-prefix: ""
+  demo-enabled: false
+  # 登录密码RSA开关（dev关闭以便联调明文登录）
+  rsa-enabled: true
+
 
 springdoc:
     swagger-ui:
@@ -88,10 +106,4 @@ springdoc:
         url: ${agileboot.api-prefix}/v3/api-docs
         config-url: ${agileboot.api-prefix}/v3/api-docs/swagger-config
 
-# 项目相关配置
-agileboot:
-    # 文件基路径
-    file-base-dir: /tmp/agileboot
-    # 前端url请求转发前缀
-    api-prefix: /dev-api
-    demo-enabled: false
+

@@ -15,8 +15,7 @@ import java.time.Year;
 @Schema(description = "更新实验室用户命令")
 public class UpdateLabUserCommand {
 
-    @Schema(description = "用户ID")
-    @NotNull(message = "用户ID不能为空")
+    @Schema(description = "用户ID（由路径参数提供）")
     private Long id;
 
     @Schema(description = "学号/工号")
