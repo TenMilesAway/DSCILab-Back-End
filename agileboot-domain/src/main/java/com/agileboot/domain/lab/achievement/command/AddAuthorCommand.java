@@ -20,6 +20,24 @@ public class AddAuthorCommand {
     @Size(max = 100, message = "英文姓名长度不能超过100")
     private String nameEn;
 
+    // 以下字段用于自动绑定内部作者（优先级高于姓名匹配，若唯一匹配成功将解析为 userId）
+    @Schema(description = "登录用户名（优先用于自动绑定）")
+    @Size(max = 50, message = "用户名长度不能超过50")
+    private String username;
+
+    @Schema(description = "邮箱（用于自动绑定）")
+    @Email(message = "邮箱格式不正确")
+    @Size(max = 100, message = "邮箱长度不能超过100")
+    private String email;
+
+    @Schema(description = "手机号（用于自动绑定）")
+    @Size(max = 20, message = "手机号长度不能超过20")
+    private String phone;
+
+    @Schema(description = "学号/工号（用于自动绑定）")
+    @Size(max = 20, message = "学号/工号长度不能超过20")
+    private String studentNumber;
+
     @Schema(description = "单位/机构")
     @Size(max = 300, message = "单位长度不能超过300")
     private String affiliation;

@@ -100,8 +100,8 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             roleInfo.setMenuPermissions(new java.util.HashSet<>(java.util.Arrays.asList(
                 // 用户管理权限
                 "lab:user:query", "lab:user:list",
-                // 成果管理权限
-                "lab:achievement:query", "lab:achievement:list", "lab:achievement:add", "lab:achievement:edit"
+                // 成果管理权限（含删除自身成果：remove）
+                "lab:achievement:query", "lab:achievement:list", "lab:achievement:add", "lab:achievement:edit", "lab:achievement:remove"
             )));
         }
         roleInfo.setRoleName(isAdmin ? "ADMIN" : "LAB_PUBLIC");

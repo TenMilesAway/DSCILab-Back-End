@@ -9,6 +9,7 @@ import com.agileboot.domain.lab.achievement.LabAchievementApplicationService;
 import com.agileboot.domain.lab.achievement.command.CreateLabAchievementCommand;
 import com.agileboot.domain.lab.achievement.dto.LabAchievementDTO;
 import com.agileboot.domain.lab.achievement.query.LabAchievementQuery;
+import com.agileboot.domain.lab.achievement.query.MyAchievementQuery;
 import com.agileboot.domain.lab.user.LabUserPermissionChecker;
 import com.agileboot.domain.lab.user.db.LabUserEntity;
 import com.agileboot.common.exception.ApiException;
@@ -50,8 +51,35 @@ public class LabAchievementController extends BaseController {
     @AccessLog(title = "成果管理")
     public ResponseDTO<PageDTO<LabAchievementDTO>> list(
         @Parameter(description = "查询条件") LabAchievementQuery query) {
-        PageDTO<LabAchievementDTO> pageDTO = achievementApplicationService.getAchievementList(query);
-        return ResponseDTO.ok(pageDTO);
+
+        // 检查当前用户是否为管理员
+        if (labUserPermission.isAdmin()) {
+            // 管理员可以查看所有成果
+            PageDTO<LabAchievementDTO> pageDTO = achievementApplicationService.getAchievementList(query);
+            return ResponseDTO.ok(pageDTO);
+        } else {
+            // 普通用户只能查看自己参与的成果
+            LabUserEntity currentUser = labUserPermission.getCurrentLabUser();
+            if (currentUser == null) {
+                throw new ApiException(ErrorCode.Client.COMMON_NO_AUTHORIZATION, "未找到当前用户信息");
+            }
+
+            // 将LabAchievementQuery转换为MyAchievementQuery
+            MyAchievementQuery myQuery = new MyAchievementQuery();
+            myQuery.setPageNum(query.getPageNum());
+            myQuery.setPageSize(query.getPageSize());
+            myQuery.setKeyword(query.getKeyword());
+            myQuery.setType(query.getType());
+            myQuery.setPaperType(query.getPaperType());
+            myQuery.setProjectType(query.getProjectType());
+            myQuery.setPublished(query.getPublished());
+            myQuery.setIsVerified(query.getIsVerified());
+            myQuery.setDateStart(query.getDateStart());
+            myQuery.setDateEnd(query.getDateEnd());
+
+            PageDTO<LabAchievementDTO> pageDTO = achievementApplicationService.getMyAchievementList(myQuery, currentUser.getId());
+            return ResponseDTO.ok(pageDTO);
+        }
     }
 
     @Operation(summary = "成果详情", description = "根据ID获取成果详细信息")
@@ -122,7 +150,7 @@ public class LabAchievementController extends BaseController {
 
     @Operation(summary = "发布成果", description = "发布/取消发布成果")
     @PutMapping("/{id}/publish")
-    @PreAuthorize("@permission.has('lab:achievement:publish')")
+    @PreAuthorize("isAuthenticated()")
     @AccessLog(title = "成果管理")
     public ResponseDTO<Void> publish(@PathVariable Long id, @RequestParam Boolean published) {
         LabUserEntity current = labUserPermission.getCurrentLabUser();

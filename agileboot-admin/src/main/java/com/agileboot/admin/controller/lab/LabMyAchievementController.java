@@ -50,7 +50,7 @@ public class LabMyAchievementController extends BaseController {
         @ApiResponse(responseCode = "403", description = "权限不足")
     })
     @GetMapping
-    @PreAuthorize("@permission.has('lab:achievement:query')")
+    @PreAuthorize("isAuthenticated()")
     @AccessLog(title = "我的成果")
     public ResponseDTO<PageDTO<LabAchievementDTO>> list(
         @Parameter(description = "查询条件") MyAchievementQuery query) {
@@ -68,7 +68,7 @@ public class LabMyAchievementController extends BaseController {
         @ApiResponse(responseCode = "404", description = "成果不存在或您不是该成果的作者")
     })
     @PutMapping("/{achievementId}/visibility")
-    @PreAuthorize("@permission.has('lab:achievement:edit')")
+    @PreAuthorize("isAuthenticated()")
     @AccessLog(title = "我的成果")
     public ResponseDTO<Void> toggleVisibility(
         @Parameter(description = "成果ID", required = true) @PathVariable Long achievementId,
@@ -77,4 +77,6 @@ public class LabMyAchievementController extends BaseController {
         achievementApplicationService.toggleMyVisibilityInAchievement(achievementId, visible, current.getId());
         return ResponseDTO.ok();
     }
+
+
 }

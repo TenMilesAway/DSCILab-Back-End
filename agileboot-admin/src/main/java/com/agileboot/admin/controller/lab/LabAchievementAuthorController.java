@@ -12,6 +12,7 @@ import com.agileboot.domain.lab.achievement.db.LabAchievementAuthorService;
 import com.agileboot.domain.lab.achievement.db.LabAchievementService;
 import com.agileboot.domain.lab.user.LabUserPermissionChecker;
 import com.agileboot.domain.lab.user.db.LabUserEntity;
+import com.agileboot.domain.lab.user.db.LabUserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -22,6 +23,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,6 +39,7 @@ public class LabAchievementAuthorController extends BaseController {
     private final LabAchievementService achievementService;
     private final LabAchievementAuthorService authorService;
     private final LabUserPermissionChecker labUserPermission;
+    private final LabUserService labUserService;
 
     private void checkEditPermission(Long achievementId) {
         LabUserEntity current = labUserPermission.getCurrentLabUser();
@@ -75,6 +78,7 @@ public class LabAchievementAuthorController extends BaseController {
     @PostMapping
     @PreAuthorize("@permission.has('lab:achievement:edit')")
     @AccessLog(title = "成果作者")
+    @Transactional(rollbackFor = Exception.class)
     public ResponseDTO<Long> add(@PathVariable Long achievementId, @Validated @RequestBody AddAuthorCommand cmd) {
         checkEditPermission(achievementId);
 
@@ -85,6 +89,61 @@ public class LabAchievementAuthorController extends BaseController {
         // 校验顺序唯一
         if (authorService.isAuthorOrderExists(achievementId, cmd.getAuthorOrder(), null)) {
             throw new ApiException(ErrorCode.Client.COMMON_REQUEST_PARAMETERS_INVALID, "作者顺序已存在");
+        }
+
+        // 自动绑定：当未提供 userId 时，优先按唯一键(username/email/phone/studentNumber)解析，再退回到唯一姓名匹配
+        if (cmd.getUserId() == null) {
+            LabUserEntity matched = null;
+            if (cmd.getUsername() != null && !cmd.getUsername().trim().isEmpty()) {
+                matched = labUserService.getByUsername(cmd.getUsername().trim());
+            }
+            if (matched == null && cmd.getEmail() != null && !cmd.getEmail().trim().isEmpty()) {
+                matched = labUserService.getByEmail(cmd.getEmail().trim());
+            }
+            if (matched == null && cmd.getPhone() != null && !cmd.getPhone().trim().isEmpty()) {
+                matched = labUserService.getByPhone(cmd.getPhone().trim());
+            }
+            if (matched == null && cmd.getStudentNumber() != null && !cmd.getStudentNumber().trim().isEmpty()) {
+                matched = labUserService.getByStudentNumber(cmd.getStudentNumber().trim());
+            }
+            if (matched == null) {
+                matched = labUserService.getUniqueByRealName(cmd.getName());
+            }
+            if (matched == null && cmd.getNameEn() != null) {
+                matched = labUserService.getUniqueByEnglishName(cmd.getNameEn());
+            }
+            if (matched != null && !authorService.isAuthor(achievementId, matched.getId())) {
+                cmd.setUserId(matched.getId());
+            }
+        }
+
+        // 若绑定的是内部作者，检查是否已存在（包含软删）。
+        if (cmd.getUserId() != null) {
+            LabAchievementAuthorEntity existed = authorService.lambdaQuery()
+                .eq(LabAchievementAuthorEntity::getAchievementId, achievementId)
+                .eq(LabAchievementAuthorEntity::getUserId, cmd.getUserId())
+                .one();
+            if (existed != null) {
+                if (Boolean.FALSE.equals(existed.getDeleted())) {
+                    throw new ApiException(ErrorCode.Client.COMMON_REQUEST_PARAMETERS_INVALID, "该内部作者已存在于该成果");
+                } else {
+                    // 复活软删记录，需校验顺序唯一（排除自身ID）
+                    if (authorService.isAuthorOrderExists(achievementId, cmd.getAuthorOrder(), existed.getId())) {
+                        throw new ApiException(ErrorCode.Client.COMMON_REQUEST_PARAMETERS_INVALID, "作者顺序已存在");
+                    }
+                    existed.setName(cmd.getName());
+                    existed.setNameEn(cmd.getNameEn());
+                    existed.setAffiliation(cmd.getAffiliation());
+                    existed.setAuthorOrder(cmd.getAuthorOrder());
+                    existed.setIsCorresponding(Boolean.TRUE.equals(cmd.getIsCorresponding()));
+                    existed.setRole(cmd.getRole());
+                    existed.setVisible(Boolean.TRUE.equals(cmd.getVisible()));
+                    existed.setDeleted(false);
+                    existed.setUpdateTime(new java.util.Date());
+                    authorService.updateById(existed);
+                    return ResponseDTO.ok(existed.getId());
+                }
+            }
         }
 
         LabAchievementAuthorEntity e = new LabAchievementAuthorEntity();
@@ -106,6 +165,7 @@ public class LabAchievementAuthorController extends BaseController {
     @PutMapping("/{authorId}")
     @PreAuthorize("@permission.has('lab:achievement:edit')")
     @AccessLog(title = "成果作者")
+    @Transactional(rollbackFor = Exception.class)
     public ResponseDTO<Void> update(@PathVariable Long achievementId, @PathVariable Long authorId, @Validated @RequestBody UpdateAuthorCommand cmd) {
         checkEditPermission(achievementId);
         LabAchievementAuthorEntity e = authorService.getById(authorId);
@@ -132,6 +192,7 @@ public class LabAchievementAuthorController extends BaseController {
     @DeleteMapping("/{authorId}")
     @PreAuthorize("@permission.has('lab:achievement:edit')")
     @AccessLog(title = "成果作者")
+    @Transactional(rollbackFor = Exception.class)
     public ResponseDTO<Void> delete(@PathVariable Long achievementId, @PathVariable Long authorId) {
         checkEditPermission(achievementId);
         LabAchievementAuthorEntity e = authorService.getById(authorId);
@@ -147,6 +208,7 @@ public class LabAchievementAuthorController extends BaseController {
     @PutMapping("/{authorId}/reorder")
     @PreAuthorize("@permission.has('lab:achievement:edit')")
     @AccessLog(title = "成果作者")
+    @Transactional(rollbackFor = Exception.class)
     public ResponseDTO<Void> reorder(@PathVariable Long achievementId, @PathVariable Long authorId, @RequestParam Integer newOrder) {
         checkEditPermission(achievementId);
         if (newOrder == null || newOrder < 1) {
@@ -168,6 +230,7 @@ public class LabAchievementAuthorController extends BaseController {
     @PutMapping("/{authorId}/visibility")
     @PreAuthorize("@permission.has('lab:achievement:edit')")
     @AccessLog(title = "成果作者")
+    @Transactional(rollbackFor = Exception.class)
     public ResponseDTO<Void> toggleVisibility(@PathVariable Long achievementId, @PathVariable Long authorId, @RequestParam Boolean visible) {
         checkEditPermission(achievementId);
         LabAchievementAuthorEntity e = authorService.getById(authorId);

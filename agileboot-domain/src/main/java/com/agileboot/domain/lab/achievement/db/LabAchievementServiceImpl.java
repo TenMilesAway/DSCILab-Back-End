@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
  */
 @Service
 @RequiredArgsConstructor
-public class LabAchievementServiceImpl extends ServiceImpl<LabAchievementMapper, LabAchievementEntity> 
+public class LabAchievementServiceImpl extends ServiceImpl<LabAchievementMapper, LabAchievementEntity>
     implements LabAchievementService {
 
     private final LabAchievementAuthorService authorService;
@@ -28,14 +28,18 @@ public class LabAchievementServiceImpl extends ServiceImpl<LabAchievementMapper,
         if (isAdmin) {
             return true;
         }
-        
+
         // 检查是否为拥有者
         if (isOwner(achievementId, userId)) {
             return true;
         }
-        
-        // 检查是否为该成果的内部作者
-        return authorService.isAuthor(achievementId, userId);
+
+        // 允许第一负责人（第一作者，author_order=1 且内部作者）编辑
+        LabAchievementAuthorEntity rec = authorService.getAuthorRecord(achievementId, userId);
+        if (rec != null && Boolean.FALSE.equals(rec.getDeleted()) && Integer.valueOf(1).equals(rec.getAuthorOrder())) {
+            return true;
+        }
+        return false;
     }
 
     @Override

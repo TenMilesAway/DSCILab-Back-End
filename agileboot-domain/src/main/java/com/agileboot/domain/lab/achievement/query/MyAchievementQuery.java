@@ -36,6 +36,12 @@ public class MyAchievementQuery extends AbstractPageQuery<LabAchievementEntity> 
     @Schema(description = "是否已审核")
     private Boolean isVerified;
 
+    @Schema(description = "拥有者姓名（模糊匹配 real_name/english_name，用于我的成果内过滤）")
+    private String ownerName;
+
+    @Schema(description = "作者姓名（模糊匹配作者表的 name/name_en，用于我的成果内过滤）")
+    private String authorName;
+
     @Schema(description = "发表/开始日期范围-开始")
     private LocalDate dateStart;
 
@@ -46,7 +52,7 @@ public class MyAchievementQuery extends AbstractPageQuery<LabAchievementEntity> 
     public QueryWrapper<LabAchievementEntity> addQueryCondition() {
         QueryWrapper<LabAchievementEntity> qw = new QueryWrapper<>();
         qw.eq("deleted", false);
-        
+
         if (StrUtil.isNotBlank(keyword)) {
             qw.and(w -> w.like("title", keyword).or().like("keywords", keyword));
         }
