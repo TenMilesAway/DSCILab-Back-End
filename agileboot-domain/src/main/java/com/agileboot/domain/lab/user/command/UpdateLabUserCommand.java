@@ -76,6 +76,10 @@ public class UpdateLabUserCommand {
     @Size(max = 255, message = "毕业去向长度不能超过255个字符")
     private String graduationDest;
 
+    @Schema(description = "照片路径")
+    @Size(max = 500, message = "照片路径长度不能超过500个字符")
+    private String photo;
+
     @Schema(description = "个人简历")
     @Size(max = 5000, message = "个人简历长度不能超过5000个字符")
     private String resume;

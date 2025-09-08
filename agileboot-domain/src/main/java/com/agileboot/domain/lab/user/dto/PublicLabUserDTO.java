@@ -16,11 +16,17 @@ public class PublicLabUserDTO {
     @Schema(description = "用户ID")
     private Long id;
 
+    @Schema(description = "学号/工号")
+    private String studentNumber;
+
     @Schema(description = "真实姓名")
     private String realName;
 
     @Schema(description = "英文名")
     private String englishName;
+
+    @Schema(description = "性别：0=未知,1=男,2=女")
+    private Integer gender;
 
     @Schema(description = "身份：1=管理员,2=教师,3=学生")
     private Integer identity;
@@ -30,6 +36,9 @@ public class PublicLabUserDTO {
 
     @Schema(description = "研究方向")
     private String researchArea;
+
+    @Schema(description = "手机号码")
+    private String phone;
 
     @Schema(description = "入学/入职年份")
     private Year enrollmentYear;
@@ -43,6 +52,9 @@ public class PublicLabUserDTO {
     @Schema(description = "照片路径")
     private String photo;
 
+    @Schema(description = "个人简历")
+    private String resume;
+
     @Schema(description = "个人主页")
     private String homepageUrl;
 
@@ -55,15 +67,19 @@ public class PublicLabUserDTO {
     public static PublicLabUserDTO fromEntity(LabUserEntity e) {
         PublicLabUserDTO dto = new PublicLabUserDTO();
         dto.setId(e.getId());
+        dto.setStudentNumber(e.getStudentNumber());
         dto.setRealName(e.getRealName());
         dto.setEnglishName(e.getEnglishName());
+        dto.setGender(e.getGender());
         dto.setIdentity(e.getIdentity());
         dto.setAcademicStatus(e.getAcademicStatus());
         dto.setResearchArea(e.getResearchArea());
+        dto.setPhone(e.getPhone());
         dto.setEnrollmentYear(e.getEnrollmentYear());
         dto.setGraduationYear(e.getGraduationYear());
         dto.setGraduationDest(e.getGraduationDest());
         dto.setPhoto(e.getPhoto());
+        dto.setResume(e.getResume());
         dto.setHomepageUrl(e.getHomepageUrl());
         dto.setEmail(e.getEmail());
         dto.setOrcid(e.getOrcid());

@@ -82,6 +82,9 @@ public class PublicAchievementDTO {
     @Schema(description = "项目经费（万元）")
     private BigDecimal fundingAmount;
 
+    @Schema(description = "是否对外发布")
+    private Boolean published;
+
     @Schema(description = "作者列表")
     private List<PublicAuthorDTO> authors;
 
@@ -98,7 +101,7 @@ public class PublicAchievementDTO {
         if (entity == null) {
             return null;
         }
-        
+
         PublicAchievementDTO dto = new PublicAchievementDTO();
         dto.setId(entity.getId());
         dto.setTitle(entity.getTitle());
@@ -119,9 +122,10 @@ public class PublicAchievementDTO {
         dto.setPdfUrl(entity.getPdfUrl());
         dto.setDoi(entity.getDoi());
         dto.setFundingAmount(entity.getFundingAmount());
+        dto.setPublished(entity.getPublished());
         dto.setExtra(entity.getExtra());
         dto.setCreateTime(entity.getCreateTime());
-        
+
         // 设置类型描述
         if (entity.getType() != null) {
             dto.setTypeDesc(entity.getType() == 1 ? "论文" : "项目");
@@ -132,7 +136,7 @@ public class PublicAchievementDTO {
         if (entity.getProjectType() != null) {
             dto.setProjectTypeDesc(getProjectTypeDesc(entity.getProjectType()));
         }
-        
+
         return dto;
     }
 

@@ -97,6 +97,9 @@ public class LabAchievementDTO {
     @Schema(description = "作者列表")
     private List<LabAchievementAuthorDTO> authors = new java.util.ArrayList<>();
 
+    @Schema(description = "当前用户在该成果中的可见性状态（仅在我的成果列表中有效）")
+    private Boolean myVisibility;
+
     @Schema(description = "扩展信息")
     private String extra;
 

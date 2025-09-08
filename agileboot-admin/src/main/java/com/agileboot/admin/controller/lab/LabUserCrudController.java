@@ -7,6 +7,12 @@ import com.agileboot.domain.lab.user.LabUserCrudApplicationService;
 import com.agileboot.domain.lab.user.command.*;
 import com.agileboot.domain.lab.user.dto.LabUserProfileDTO;
 import com.agileboot.domain.lab.user.query.LabUserQuery;
+import com.agileboot.common.constant.Constants.UploadSubDir;
+import com.agileboot.common.utils.file.FileUploadUtils;
+import com.agileboot.domain.common.dto.UploadFileDTO;
+import com.agileboot.common.exception.ApiException;
+import com.agileboot.common.exception.error.ErrorCode;
+import org.springframework.web.multipart.MultipartFile;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -203,5 +209,53 @@ public class LabUserCrudController extends BaseController {
     public ResponseDTO<String> importUsers() {
         // 导入功能待实现
         return ResponseDTO.ok("导入功能待实现");
+    }
+
+    // ==================== 文件上传功能 ====================
+
+    /**
+     * 上传用户头像
+     */
+    @Operation(summary = "上传用户头像", description = "用户上传个人头像")
+    @PostMapping("/profile/photo")
+    public ResponseDTO<UploadFileDTO> uploadPhoto(@RequestParam("photofile") MultipartFile file) {
+        if (file.isEmpty()) {
+            throw new ApiException(ErrorCode.Business.USER_UPLOAD_FILE_FAILED);
+        }
+
+        // 上传文件到头像目录
+        String photoUrl = FileUploadUtils.upload(UploadSubDir.AVATAR_PATH, file);
+
+        // 更新当前用户的头像
+        UpdateProfileCommand command = new UpdateProfileCommand();
+        command.setPhoto(photoUrl);
+        labUserCrudApplicationService.updateProfile(command);
+
+        return ResponseDTO.ok(new UploadFileDTO(photoUrl));
+    }
+
+    /**
+     * 管理员为指定用户上传头像
+     */
+    @Operation(summary = "管理员上传用户头像", description = "管理员为指定用户上传头像")
+    @PreAuthorize("@permission.has('lab:user:edit') OR @labUserPermission.isAdmin()")
+    @PostMapping("/{userId}/photo")
+    public ResponseDTO<UploadFileDTO> uploadUserPhoto(
+            @Parameter(description = "用户ID") @PathVariable Long userId,
+            @RequestParam("photofile") MultipartFile file) {
+        if (file.isEmpty()) {
+            throw new ApiException(ErrorCode.Business.USER_UPLOAD_FILE_FAILED);
+        }
+
+        // 上传文件到头像目录
+        String photoUrl = FileUploadUtils.upload(UploadSubDir.AVATAR_PATH, file);
+
+        // 更新指定用户的头像
+        UpdateLabUserCommand command = new UpdateLabUserCommand();
+        command.setId(userId);
+        command.setPhoto(photoUrl);
+        labUserCrudApplicationService.updateUser(command);
+
+        return ResponseDTO.ok(new UploadFileDTO(photoUrl));
     }
 }

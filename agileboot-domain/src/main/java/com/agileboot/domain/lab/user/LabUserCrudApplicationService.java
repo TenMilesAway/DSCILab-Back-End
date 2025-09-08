@@ -150,6 +150,7 @@ public class LabUserCrudApplicationService {
         user.setEnrollmentYear(command.getEnrollmentYear());
         user.setGraduationYear(command.getGraduationYear());
         user.setGraduationDest(command.getGraduationDest());
+        user.setPhoto(command.getPhoto());
         user.setResume(command.getResume());
         user.setHomepageUrl(command.getHomepageUrl());
         user.setOrcid(command.getOrcid());
@@ -203,6 +204,7 @@ public class LabUserCrudApplicationService {
         user.setEmail(normalizeBlankToNull(command.getEmail()));
         user.setGraduationYear(command.getGraduationYear());
         user.setGraduationDest(command.getGraduationDest());
+        user.setPhoto(command.getPhoto());
         user.setResume(command.getResume());
         user.setHomepageUrl(command.getHomepageUrl());
         user.setOrcid(command.getOrcid());

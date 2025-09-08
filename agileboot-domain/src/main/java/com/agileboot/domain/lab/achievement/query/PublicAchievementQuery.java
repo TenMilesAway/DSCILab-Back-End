@@ -36,15 +36,18 @@ public class PublicAchievementQuery extends AbstractPageQuery<LabAchievementEnti
     @Schema(description = "发表/开始日期范围-结束")
     private LocalDate dateEnd;
 
+    @Schema(description = "作者姓名（模糊搜索作者的中文名或英文名）")
+    private String authorName;
+
     @Override
     public QueryWrapper<LabAchievementEntity> addQueryCondition() {
         QueryWrapper<LabAchievementEntity> qw = new QueryWrapper<>();
-        
+
         // 公开端固定条件：已发布且已审核
         qw.eq("deleted", false)
           .eq("published", true)
           .eq("is_verified", true);
-        
+
         if (StrUtil.isNotBlank(keyword)) {
             qw.and(w -> w.like("title", keyword).or().like("keywords", keyword));
         }
@@ -57,7 +60,7 @@ public class PublicAchievementQuery extends AbstractPageQuery<LabAchievementEnti
         if (projectType != null) {
             qw.eq("project_type", projectType);
         }
-        
+
         // 日期范围：论文用 publish_date，项目用 project_start_date
         if (dateStart != null || dateEnd != null) {
             qw.and(w -> w.and(w1 -> w1.eq("type", 1)
@@ -69,10 +72,18 @@ public class PublicAchievementQuery extends AbstractPageQuery<LabAchievementEnti
                                       .le(dateEnd != null, "project_start_date", dateEnd))
             );
         }
-        
+
         // 排序：论文按发表日期降序，项目按开始日期降序
         qw.orderByDesc("CASE WHEN type = 1 THEN publish_date WHEN type = 2 THEN project_start_date END");
-        
+
         return qw;
+    }
+
+    @Override
+    public com.baomidou.mybatisplus.extension.plugins.pagination.Page<LabAchievementEntity> toPage() {
+        // 公开接口默认分页大小改为1000
+        pageNum = cn.hutool.core.util.ObjectUtil.defaultIfNull(pageNum, DEFAULT_PAGE_NUM);
+        pageSize = cn.hutool.core.util.ObjectUtil.defaultIfNull(pageSize, 1000);
+        return new com.baomidou.mybatisplus.extension.plugins.pagination.Page<>(pageNum, pageSize);
     }
 }

@@ -24,6 +24,7 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -268,6 +269,7 @@ public class LabAchievementApplicationService {
         entity.setHomepageUrl(command.getHomepageUrl());
         entity.setPdfUrl(command.getPdfUrl());
         entity.setFundingAmount(command.getFundingAmount());
+        entity.setPublished(command.getPublished()); // 修复：添加published字段的更新
         entity.setExtra(command.getExtra());
         entity.setUpdateTime(new java.util.Date());
 
@@ -441,7 +443,7 @@ public class LabAchievementApplicationService {
      * 获取我的成果列表（我拥有的 + 我参与的）
      */
     public PageDTO<LabAchievementDTO> getMyAchievementList(com.agileboot.domain.lab.achievement.query.MyAchievementQuery query, Long currentUserId) {
-        // 查询我参与的成果ID（作为作者）
+        // 查询我参与的成果ID（作为作者，显示所有参与的成果，不管visible设置）
         List<Long> authorAchievementIds = authorService.lambdaQuery()
             .eq(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getUserId, currentUserId)
             .eq(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getDeleted, false)
@@ -541,12 +543,22 @@ public class LabAchievementApplicationService {
             java.util.List<Long> ids = result.getRecords().stream().map(LabAchievementEntity::getId).collect(java.util.stream.Collectors.toList());
             java.util.List<com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity> authors = authorService.getAuthorsByAchievementIds(ids);
             java.util.Map<Long, java.util.List<LabAchievementAuthorDTO>> map = new java.util.HashMap<>();
+            java.util.Map<Long, Boolean> myVisibilityMap = new java.util.HashMap<>();
+
             for (com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity a : authors) {
                 map.computeIfAbsent(a.getAchievementId(), k -> new java.util.ArrayList<>())
                    .add(LabAchievementAuthorDTO.fromEntity(a));
+
+                // 记录当前用户在每个成果中的可见性状态
+                if (currentUserId.equals(a.getUserId())) {
+                    myVisibilityMap.put(a.getAchievementId(), a.getVisible());
+                }
             }
+
             for (LabAchievementDTO dto : dtoList) {
                 dto.setAuthors(map.getOrDefault(dto.getId(), java.util.Collections.emptyList()));
+                // 设置当前用户在该成果中的可见性状态
+                dto.setMyVisibility(myVisibilityMap.get(dto.getId()));
             }
         }
 
@@ -558,7 +570,9 @@ public class LabAchievementApplicationService {
      * 切换我在某成果中的个人页可见性（仅作者本人可操作自己的可见性）
      */
     @Transactional(rollbackFor = Exception.class)
-    public void toggleMyVisibilityInAchievement(Long achievementId, Boolean visible, Long currentUserId) {
+    public Boolean toggleMyVisibilityInAchievement(Long achievementId, Boolean visible, Long currentUserId) {
+        System.out.println("DEBUG: 切换可见性 - achievementId=" + achievementId + ", visible=" + visible + ", userId=" + currentUserId);
+
         // 检查成果是否存在
         LabAchievementEntity achievement = achievementService.getByIdNotDeleted(achievementId);
         if (achievement == null) {
@@ -572,21 +586,71 @@ public class LabAchievementApplicationService {
             throw new ApiException(ErrorCode.Business.COMMON_OBJECT_NOT_FOUND, "", "您不是该成果的作者");
         }
 
+        System.out.println("DEBUG: 找到作者记录 - authorId=" + authorRecord.getId() + ", 当前visible=" + authorRecord.getVisible());
+
         // 更新可见性
         authorRecord.setVisible(Boolean.TRUE.equals(visible));
         authorRecord.setUpdateTime(new java.util.Date());
-        authorService.updateById(authorRecord);
+        boolean updateResult = authorService.updateById(authorRecord);
+
+        System.out.println("DEBUG: 更新结果=" + updateResult + ", 新visible=" + authorRecord.getVisible());
+
+        return authorRecord.getVisible();
     }
     /**
-     * 获取公开成果列表（仅已发布且已审核）
+     * 获取公开成果列表（所有未删除的成果）
      */
     public PageDTO<com.agileboot.domain.lab.achievement.dto.PublicAchievementDTO> getPublicAchievementList(com.agileboot.domain.lab.achievement.query.PublicAchievementQuery query) {
         LambdaQueryWrapper<LabAchievementEntity> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(LabAchievementEntity::getDeleted, false)
-               .eq(LabAchievementEntity::getPublished, true)
-               .eq(LabAchievementEntity::getIsVerified, true);
+        wrapper.eq(LabAchievementEntity::getDeleted, false);
 
-        // 应用筛选条件
+        // 按作者名查询：需要先查出符合条件的成果ID
+        if (StringUtils.hasText(query.getAuthorName())) {
+            // 1. 查询外部作者和内部作者记录中的name/nameEn匹配
+            List<Long> achievementIdsByAuthorName = authorService.lambdaQuery()
+                .eq(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getDeleted, false)
+                .and(w -> w.like(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getName, query.getAuthorName())
+                    .or().like(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getNameEn, query.getAuthorName()))
+                .list()
+                .stream()
+                .map(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getAchievementId)
+                .collect(Collectors.toList());
+
+            // 2. 查询内部作者的lab_user表中的real_name/english_name匹配
+            List<com.agileboot.domain.lab.user.db.LabUserEntity> matchingUsers = labUserService.lambdaQuery()
+                .eq(com.agileboot.domain.lab.user.db.LabUserEntity::getDeleted, false)
+                .and(w -> w.like(com.agileboot.domain.lab.user.db.LabUserEntity::getRealName, query.getAuthorName())
+                    .or().like(com.agileboot.domain.lab.user.db.LabUserEntity::getEnglishName, query.getAuthorName()))
+                .list();
+
+            List<Long> achievementIdsByUserName = new java.util.ArrayList<>();
+            if (!matchingUsers.isEmpty()) {
+                List<Long> userIds = matchingUsers.stream()
+                    .map(com.agileboot.domain.lab.user.db.LabUserEntity::getId)
+                    .collect(Collectors.toList());
+
+                achievementIdsByUserName = authorService.lambdaQuery()
+                    .eq(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getDeleted, false)
+                    .in(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getUserId, userIds)
+                    .list()
+                    .stream()
+                    .map(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getAchievementId)
+                    .collect(Collectors.toList());
+            }
+
+            // 3. 合并两个结果
+            Set<Long> allMatchingIds = new java.util.HashSet<>();
+            allMatchingIds.addAll(achievementIdsByAuthorName);
+            allMatchingIds.addAll(achievementIdsByUserName);
+
+            if (allMatchingIds.isEmpty()) {
+                // 没有找到匹配的作者，返回空结果
+                return new PageDTO<>(java.util.Collections.emptyList(), 0L);
+            }
+            wrapper.in(LabAchievementEntity::getId, allMatchingIds);
+        }
+
+        // 应用其他筛选条件
         if (StringUtils.hasText(query.getKeyword())) {
             wrapper.and(w -> w.like(LabAchievementEntity::getTitle, query.getKeyword())
                 .or().like(LabAchievementEntity::getKeywords, query.getKeyword()));
@@ -616,18 +680,47 @@ public class LabAchievementApplicationService {
             .map(com.agileboot.domain.lab.achievement.dto.PublicAchievementDTO::fromEntity)
             .collect(Collectors.toList());
 
+        // 填充作者信息（过滤可见性：外部作者全显示，内部作者仅显示visible=true）
+        if (!dtoList.isEmpty()) {
+            List<Long> achievementIds = dtoList.stream()
+                .map(com.agileboot.domain.lab.achievement.dto.PublicAchievementDTO::getId)
+                .collect(Collectors.toList());
+
+            List<com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity> allAuthors =
+                authorService.lambdaQuery()
+                    .in(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getAchievementId, achievementIds)
+                    .eq(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getDeleted, false)
+                    .and(w -> w.isNull(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getUserId)
+                              .or().eq(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getVisible, true))
+                    .orderByAsc(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getAuthorOrder)
+                    .list();
+
+            // 按成果ID分组
+            Map<Long, List<com.agileboot.domain.lab.achievement.dto.PublicAuthorDTO>> authorMap = allAuthors.stream()
+                .collect(Collectors.groupingBy(
+                    com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getAchievementId,
+                    Collectors.mapping(
+                        com.agileboot.domain.lab.achievement.dto.PublicAuthorDTO::fromEntity,
+                        Collectors.toList()
+                    )
+                ));
+
+            // 为每个成果设置作者列表
+            for (com.agileboot.domain.lab.achievement.dto.PublicAchievementDTO dto : dtoList) {
+                dto.setAuthors(authorMap.getOrDefault(dto.getId(), java.util.Collections.emptyList()));
+            }
+        }
+
         return new PageDTO<>(dtoList, result.getTotal());
     }
 
     /**
-     * 获取公开成果详情（仅已发布且已审核）
+     * 获取公开成果详情（所有未删除的成果）
      */
     public com.agileboot.domain.lab.achievement.dto.PublicAchievementDTO getPublicAchievementDetail(Long id) {
         LabAchievementEntity entity = achievementService.lambdaQuery()
             .eq(LabAchievementEntity::getId, id)
             .eq(LabAchievementEntity::getDeleted, false)
-            .eq(LabAchievementEntity::getPublished, true)
-            .eq(LabAchievementEntity::getIsVerified, true)
             .one();
 
         if (entity == null) {

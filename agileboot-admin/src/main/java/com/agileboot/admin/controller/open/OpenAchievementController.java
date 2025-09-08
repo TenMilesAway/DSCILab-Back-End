@@ -27,7 +27,7 @@ public class OpenAchievementController extends BaseController {
 
     private final LabAchievementApplicationService achievementApplicationService;
 
-    @Operation(summary = "公开成果列表", description = "获取公开成果列表，仅返回已发布且已审核的成果，支持关键词、类型、日期范围筛选")
+    @Operation(summary = "公开成果列表", description = "获取公开成果列表，返回所有成果，支持关键词、类型、日期范围、作者姓名筛选")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "查询成功",
             content = @Content(schema = @Schema(implementation = PageDTO.class)))
@@ -39,11 +39,11 @@ public class OpenAchievementController extends BaseController {
         return ResponseDTO.ok(pageDTO);
     }
 
-    @Operation(summary = "公开成果详情", description = "获取公开成果详情，仅返回已发布且已审核的成果，包含过滤后的作者列表")
+    @Operation(summary = "公开成果详情", description = "获取公开成果详情，返回所有成果，包含过滤后的作者列表")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "查询成功",
             content = @Content(schema = @Schema(implementation = PublicAchievementDTO.class))),
-        @ApiResponse(responseCode = "404", description = "成果不存在或未公开")
+        @ApiResponse(responseCode = "404", description = "成果不存在")
     })
     @GetMapping("/{id}")
     public ResponseDTO<PublicAchievementDTO> getDetail(
