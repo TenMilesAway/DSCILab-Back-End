@@ -273,8 +273,34 @@ public class LabAchievementApplicationService {
         entity.setExtra(command.getExtra());
         entity.setUpdateTime(new java.util.Date());
 
-        // 先更新成果主体
-        achievementService.updateById(entity);
+        // 使用UpdateWrapper强制更新null值
+        com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper<LabAchievementEntity> updateWrapper =
+            new com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper<>();
+        updateWrapper.eq("id", entity.getId())
+            .set("title", entity.getTitle())
+            .set("title_en", entity.getTitleEn())
+            .set("description", entity.getDescription())
+            .set("keywords", entity.getKeywords())
+            .set("type", entity.getType())
+            .set("paper_type", entity.getPaperType())
+            .set("project_type", entity.getProjectType())
+            .set("venue", entity.getVenue())
+            .set("publish_date", entity.getPublishDate())
+            .set("project_start_date", entity.getProjectStartDate())
+            .set("project_end_date", entity.getProjectEndDate())
+            .set("cover_url", entity.getCoverUrl())
+            .set("link_url", entity.getLinkUrl())
+            .set("git_url", entity.getGitUrl())
+            .set("homepage_url", entity.getHomepageUrl())
+            .set("pdf_url", entity.getPdfUrl())
+            .set("doi", entity.getDoi())
+            .set("funding_amount", entity.getFundingAmount())
+            .set("published", entity.getPublished())
+            .set("is_verified", entity.getIsVerified())
+            .set("extra", entity.getExtra())
+            .set("update_time", entity.getUpdateTime());
+
+        achievementService.update(updateWrapper);
 
         // 若提交了作者列表，则替换（全量覆盖）：先软删旧作者，再按新列表创建
         if (command.getAuthors() != null) {
@@ -690,8 +716,6 @@ public class LabAchievementApplicationService {
                 authorService.lambdaQuery()
                     .in(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getAchievementId, achievementIds)
                     .eq(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getDeleted, false)
-                    .and(w -> w.isNull(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getUserId)
-                              .or().eq(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getVisible, true))
                     .orderByAsc(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getAuthorOrder)
                     .list();
 
@@ -730,13 +754,11 @@ public class LabAchievementApplicationService {
         com.agileboot.domain.lab.achievement.dto.PublicAchievementDTO dto =
             com.agileboot.domain.lab.achievement.dto.PublicAchievementDTO.fromEntity(entity);
 
-        // 获取作者列表（过滤可见性：外部作者全显示，内部作者仅显示visible=true）
+        // 获取作者列表（显示所有作者，不过滤可见性）
         List<com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity> authors =
             authorService.lambdaQuery()
                 .eq(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getAchievementId, id)
                 .eq(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getDeleted, false)
-                .and(w -> w.isNull(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getUserId)
-                          .or().eq(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getVisible, true))
                 .orderByAsc(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getAuthorOrder)
                 .list();
 

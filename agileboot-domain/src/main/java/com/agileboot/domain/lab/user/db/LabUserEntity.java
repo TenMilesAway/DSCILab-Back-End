@@ -27,7 +27,7 @@ public class LabUserEntity extends BaseEntity<LabUserEntity> {
     private Long id;
 
     @Schema(description = "学号/工号")
-    @TableField(value = "student_number", insertStrategy = FieldStrategy.NOT_EMPTY, updateStrategy = FieldStrategy.NOT_EMPTY)
+    @TableField(value = "student_number", insertStrategy = FieldStrategy.NOT_EMPTY)
     private String studentNumber;
 
     @Schema(description = "登录用户名")
@@ -63,11 +63,11 @@ public class LabUserEntity extends BaseEntity<LabUserEntity> {
     private String researchArea;
 
     @Schema(description = "手机号")
-    @TableField(value = "phone", insertStrategy = FieldStrategy.NOT_EMPTY, updateStrategy = FieldStrategy.NOT_EMPTY)
+    @TableField(value = "phone", insertStrategy = FieldStrategy.NOT_EMPTY)
     private String phone;
 
     @Schema(description = "邮箱")
-    @TableField(value = "email", insertStrategy = FieldStrategy.NOT_EMPTY, updateStrategy = FieldStrategy.NOT_EMPTY)
+    @TableField(value = "email", insertStrategy = FieldStrategy.NOT_EMPTY)
     private String email;
 
     @Schema(description = "状态：1=在读/在职,2=毕业/离职")

@@ -139,21 +139,21 @@ public class LabUserCrudApplicationService {
         // 更新用户信息
         user.setStudentNumber(normalizeBlankToNull(command.getStudentNumber()));
         user.setRealName(command.getRealName());
-        user.setEnglishName(command.getEnglishName());
+        user.setEnglishName(normalizeBlankToNull(command.getEnglishName()));
         user.setGender(command.getGender());
         user.setIdentity(command.getIdentity());
         user.setAcademicStatus(command.getAcademicStatus());
-        user.setResearchArea(command.getResearchArea());
+        user.setResearchArea(normalizeBlankToNull(command.getResearchArea()));
         user.setPhone(normalizeBlankToNull(command.getPhone()));
         user.setEmail(normalizeBlankToNull(command.getEmail()));
         user.setStatus(command.getStatus());
         user.setEnrollmentYear(command.getEnrollmentYear());
         user.setGraduationYear(command.getGraduationYear());
-        user.setGraduationDest(command.getGraduationDest());
-        user.setPhoto(command.getPhoto());
-        user.setResume(command.getResume());
-        user.setHomepageUrl(command.getHomepageUrl());
-        user.setOrcid(command.getOrcid());
+        user.setGraduationDest(normalizeBlankToNull(command.getGraduationDest()));
+        user.setPhoto(normalizeBlankToNull(command.getPhoto()));
+        user.setResume(normalizeBlankToNull(command.getResume()));
+        user.setHomepageUrl(normalizeBlankToNull(command.getHomepageUrl()));
+        user.setOrcid(normalizeBlankToNull(command.getOrcid()));
         user.setIsActive(command.getIsActive());
 
         // 设置更新人
@@ -162,7 +162,32 @@ public class LabUserCrudApplicationService {
             user.setUpdaterId(loginUser.getUserId());
         }
 
-        labUserService.updateById(user);
+        // 使用UpdateWrapper强制更新null值，对于NOT NULL字段设置默认值
+        com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper<LabUserEntity> updateWrapper =
+            new com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper<>();
+        updateWrapper.eq("id", user.getId())
+            .set("student_number", user.getStudentNumber())
+            .set("real_name", user.getRealName())
+            .set("english_name", user.getEnglishName())
+            .set("gender", user.getGender() != null ? user.getGender() : 0) // 默认值0=未知
+            .set("identity", user.getIdentity())
+            .set("academic_status", user.getAcademicStatus())
+            .set("research_area", user.getResearchArea())
+            .set("phone", user.getPhone())
+            .set("email", user.getEmail())
+            .set("status", user.getStatus())
+            .set("enrollment_year", user.getEnrollmentYear())
+            .set("graduation_year", user.getGraduationYear())
+            .set("graduation_dest", user.getGraduationDest())
+            .set("photo", user.getPhoto())
+            .set("resume", user.getResume())
+            .set("homepage_url", user.getHomepageUrl())
+            .set("orcid", user.getOrcid())
+            .set("is_active", user.getIsActive())
+            .set("updater_id", user.getUpdaterId())
+            .set("update_time", new java.util.Date());
+
+        labUserService.update(updateWrapper);
     }
 
     /**
@@ -195,22 +220,47 @@ public class LabUserCrudApplicationService {
         }
 
         // 更新个人信息
+        user.setStudentNumber(normalizeBlankToNull(command.getStudentNumber()));
         user.setRealName(command.getRealName());
-        user.setEnglishName(command.getEnglishName());
+        user.setEnglishName(normalizeBlankToNull(command.getEnglishName()));
         user.setGender(command.getGender());
         user.setAcademicStatus(command.getAcademicStatus());
-        user.setResearchArea(command.getResearchArea());
+        user.setResearchArea(normalizeBlankToNull(command.getResearchArea()));
         user.setPhone(normalizeBlankToNull(command.getPhone()));
         user.setEmail(normalizeBlankToNull(command.getEmail()));
+        user.setEnrollmentYear(command.getEnrollmentYear());
         user.setGraduationYear(command.getGraduationYear());
-        user.setGraduationDest(command.getGraduationDest());
-        user.setPhoto(command.getPhoto());
-        user.setResume(command.getResume());
-        user.setHomepageUrl(command.getHomepageUrl());
-        user.setOrcid(command.getOrcid());
+        user.setGraduationDest(normalizeBlankToNull(command.getGraduationDest()));
+        user.setPhoto(normalizeBlankToNull(command.getPhoto()));
+        user.setResume(normalizeBlankToNull(command.getResume()));
+        user.setHomepageUrl(normalizeBlankToNull(command.getHomepageUrl()));
+        user.setOrcid(normalizeBlankToNull(command.getOrcid()));
 
         user.setUpdaterId(loginUser.getUserId());
-        labUserService.updateById(user);
+
+        // 使用UpdateWrapper强制更新null值，对于NOT NULL字段设置默认值
+        com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper<LabUserEntity> updateWrapper =
+            new com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper<>();
+        updateWrapper.eq("id", user.getId())
+            .set("student_number", user.getStudentNumber())
+            .set("real_name", user.getRealName())
+            .set("english_name", user.getEnglishName())
+            .set("gender", user.getGender() != null ? user.getGender() : 0) // 默认值0=未知
+            .set("academic_status", user.getAcademicStatus())
+            .set("research_area", user.getResearchArea())
+            .set("phone", user.getPhone())
+            .set("email", user.getEmail())
+            .set("enrollment_year", user.getEnrollmentYear())
+            .set("graduation_year", user.getGraduationYear())
+            .set("graduation_dest", user.getGraduationDest())
+            .set("photo", user.getPhoto())
+            .set("resume", user.getResume())
+            .set("homepage_url", user.getHomepageUrl())
+            .set("orcid", user.getOrcid())
+            .set("updater_id", user.getUpdaterId())
+            .set("update_time", new java.util.Date());
+
+        labUserService.update(updateWrapper);
     }
 
     /**
