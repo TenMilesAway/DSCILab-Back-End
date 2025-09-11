@@ -40,6 +40,9 @@ public class PublicLabUserDTO {
     @Schema(description = "手机号码")
     private String phone;
 
+    @Schema(description = "状态：1=在读/在职,2=毕业/离职")
+    private Integer status;
+
     @Schema(description = "入学/入职年份")
     private Year enrollmentYear;
 
@@ -75,6 +78,7 @@ public class PublicLabUserDTO {
         dto.setAcademicStatus(e.getAcademicStatus());
         dto.setResearchArea(e.getResearchArea());
         dto.setPhone(e.getPhone());
+        dto.setStatus(e.getStatus());
         dto.setEnrollmentYear(e.getEnrollmentYear());
         dto.setGraduationYear(e.getGraduationYear());
         dto.setGraduationDest(e.getGraduationDest());

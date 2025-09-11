@@ -60,11 +60,13 @@
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/system/user/UserApplicationService.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/system/monitor/dto/DiskInfo.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/system/post/command/AddPostCommand.java
+/Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/lab/relationship/LabUserRelationshipApplicationService.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/system/log/db/SysLoginInfoEntity.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/system/role/command/UpdateRoleCommand.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/system/user/db/SysUserService.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/system/notice/command/NoticeUpdateCommand.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/system/post/query/PostQuery.java
+/Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/lab/relationship/command/CreateUserRelationshipCommand.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/lab/achievement/db/LabAchievementAuthorMapper.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/system/post/db/SysPostMapper.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/lab/achievement/query/MyAchievementQuery.java
@@ -77,6 +79,7 @@
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/lab/achievement/query/PublicAchievementQuery.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/lab/user/db/LabUserEntity.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/system/user/command/UpdateUserAvatarCommand.java
+/Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/lab/relationship/db/LabUserRelationshipEntity.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/lab/achievement/command/AddAuthorCommand.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/lab/achievement/dto/PublicAuthorDTO.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/system/config/model/ConfigModel.java
@@ -104,6 +107,7 @@
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/system/menu/dto/ExtraIconDTO.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/system/menu/command/UpdateMenuCommand.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/system/monitor/dto/ServerInfo.java
+/Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/lab/relationship/db/LabUserRelationshipMapper.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/lab/user/command/CreateLabUserCommand.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/system/user/dto/UserProfileDTO.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/system/menu/db/SysMenuMapper.java
@@ -151,6 +155,7 @@
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/system/role/db/SysRoleMenuEntity.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/common/cache/RedisCacheService.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/lab/achievement/db/LabAchievementAuthorEntity.java
+/Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/lab/relationship/dto/UserRelationshipDTO.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/system/menu/model/MenuModel.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/system/user/model/UserModelFactory.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/system/log/db/SysOperationLogServiceImpl.java
@@ -164,5 +169,6 @@
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/lab/user/dto/LabLoginUserDTO.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/system/user/dto/UserDTO.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/system/notice/query/NoticeQuery.java
+/Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/lab/relationship/LabUserRelationshipService.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/system/monitor/dto/SystemInfo.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/main/java/com/agileboot/domain/system/notice/command/NoticeAddCommand.java

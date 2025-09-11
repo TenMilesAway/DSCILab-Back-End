@@ -27,7 +27,7 @@ public class LabUserEntity extends BaseEntity<LabUserEntity> {
     private Long id;
 
     @Schema(description = "学号/工号")
-    @TableField(value = "student_number", insertStrategy = FieldStrategy.NOT_EMPTY)
+    @TableField(value = "student_number", insertStrategy = FieldStrategy.NOT_EMPTY, updateStrategy = FieldStrategy.IGNORED)
     private String studentNumber;
 
     @Schema(description = "登录用户名")
@@ -39,7 +39,7 @@ public class LabUserEntity extends BaseEntity<LabUserEntity> {
     private String realName;
 
     @Schema(description = "英文名")
-    @TableField("english_name")
+    @TableField(value = "english_name", updateStrategy = FieldStrategy.IGNORED)
     private String englishName;
 
     @Schema(description = "密码（加密）")
@@ -55,19 +55,19 @@ public class LabUserEntity extends BaseEntity<LabUserEntity> {
     private Integer identity;
 
     @Schema(description = "学术身份：0=实验室负责人,1=教授,2=副教授,3=讲师,4=博士,5=硕士,6=本科")
-    @TableField("academic_status")
+    @TableField(value = "academic_status", updateStrategy = FieldStrategy.IGNORED)
     private Integer academicStatus;
 
     @Schema(description = "研究方向")
-    @TableField("research_area")
+    @TableField(value = "research_area", updateStrategy = FieldStrategy.IGNORED)
     private String researchArea;
 
     @Schema(description = "手机号")
-    @TableField(value = "phone", insertStrategy = FieldStrategy.NOT_EMPTY)
+    @TableField(value = "phone", insertStrategy = FieldStrategy.NOT_EMPTY, updateStrategy = FieldStrategy.IGNORED)
     private String phone;
 
     @Schema(description = "邮箱")
-    @TableField(value = "email", insertStrategy = FieldStrategy.NOT_EMPTY)
+    @TableField(value = "email", insertStrategy = FieldStrategy.NOT_EMPTY, updateStrategy = FieldStrategy.IGNORED)
     private String email;
 
     @Schema(description = "状态：1=在读/在职,2=毕业/离职")
@@ -75,15 +75,15 @@ public class LabUserEntity extends BaseEntity<LabUserEntity> {
     private Integer status;
 
     @Schema(description = "入学/入职年份")
-    @TableField("enrollment_year")
+    @TableField(value = "enrollment_year", updateStrategy = FieldStrategy.IGNORED)
     private Year enrollmentYear;
 
     @Schema(description = "毕业/离职年份")
-    @TableField("graduation_year")
+    @TableField(value = "graduation_year", updateStrategy = FieldStrategy.IGNORED)
     private Year graduationYear;
 
     @Schema(description = "毕业去向")
-    @TableField("graduation_dest")
+    @TableField(value = "graduation_dest", updateStrategy = FieldStrategy.IGNORED)
     private String graduationDest;
 
     @Schema(description = "照片路径")
@@ -91,15 +91,15 @@ public class LabUserEntity extends BaseEntity<LabUserEntity> {
     private String photo;
 
     @Schema(description = "个人简历")
-    @TableField("resume")
+    @TableField(value = "resume", updateStrategy = FieldStrategy.IGNORED)
     private String resume;
 
     @Schema(description = "个人主页")
-    @TableField("homepage_url")
+    @TableField(value = "homepage_url", updateStrategy = FieldStrategy.IGNORED)
     private String homepageUrl;
 
     @Schema(description = "ORCID ID")
-    @TableField("orcid")
+    @TableField(value = "orcid", updateStrategy = FieldStrategy.IGNORED)
     private String orcid;
 
     @Schema(description = "账号是否启用")

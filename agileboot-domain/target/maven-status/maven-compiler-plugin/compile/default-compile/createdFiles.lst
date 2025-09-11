@@ -85,7 +85,9 @@ com/agileboot/domain/system/log/db/SysOperationLogEntity.class
 com/agileboot/domain/lab/achievement/command/AddAuthorCommand.class
 com/agileboot/domain/system/role/dto/RoleDTO.class
 com/agileboot/domain/system/notice/model/NoticeModel.class
+com/agileboot/domain/lab/relationship/db/LabUserRelationshipEntity.class
 com/agileboot/domain/system/log/db/SysLoginInfoEntity.class
+com/agileboot/domain/lab/relationship/db/LabUserRelationshipEntity$Status.class
 com/agileboot/domain/system/user/db/SysUserMapper.class
 com/agileboot/domain/system/user/command/AddUserCommand.class
 com/agileboot/domain/system/config/db/SysConfigMapper.class
@@ -102,9 +104,11 @@ com/agileboot/domain/lab/user/db/LabUserEntity.class
 com/agileboot/domain/system/menu/command/AddMenuCommand.class
 com/agileboot/domain/system/user/command/UpdateUserAvatarCommand.class
 com/agileboot/domain/system/user/db/SysUserServiceImpl.class
+com/agileboot/domain/lab/relationship/command/CreateUserRelationshipCommand.class
 com/agileboot/domain/system/log/query/OperationLogQuery.class
 com/agileboot/domain/system/config/model/ConfigModel.class
 com/agileboot/domain/lab/achievement/dto/PublicAchievementDTO.class
+com/agileboot/domain/lab/relationship/LabUserRelationshipApplicationService.class
 com/agileboot/domain/system/config/db/SysConfigService.class
 com/agileboot/domain/lab/user/query/LabUserQuery.class
 com/agileboot/domain/system/dept/model/DeptModelFactory.class
@@ -134,6 +138,7 @@ com/agileboot/domain/system/monitor/dto/OnlineUserDTO.class
 com/agileboot/domain/system/menu/model/MenuModel.class
 com/agileboot/domain/system/dept/DeptApplicationService.class
 com/agileboot/domain/common/dto/CurrentLoginUserDTO.class
+com/agileboot/domain/lab/relationship/dto/UserRelationshipDTO.class
 com/agileboot/domain/system/role/query/RoleQuery.class
 com/agileboot/domain/lab/achievement/db/LabAchievementAuthorEntity.class
 com/agileboot/domain/system/notice/command/NoticeAddCommand.class
@@ -143,6 +148,7 @@ com/agileboot/domain/lab/achievement/dto/LabAchievementAuthorDTO.class
 com/agileboot/domain/lab/user/db/LabUserMapper.class
 com/agileboot/domain/system/menu/db/SysMenuEntity.class
 com/agileboot/domain/system/role/db/SysRoleEntity.class
+com/agileboot/domain/lab/relationship/db/LabUserRelationshipMapper.class
 com/agileboot/domain/system/notice/model/NoticeModelFactory.class
 com/agileboot/domain/system/menu/query/MenuQuery.class
 com/agileboot/domain/system/log/query/LoginLogQuery.class
@@ -153,6 +159,7 @@ com/agileboot/domain/system/menu/model/RouterModel.class
 com/agileboot/domain/system/role/command/UpdateDataScopeCommand.class
 com/agileboot/domain/system/post/db/SysPostMapper.class
 com/agileboot/domain/system/user/model/UserModel.class
+com/agileboot/domain/lab/relationship/LabUserRelationshipService.class
 com/agileboot/domain/common/cache/GuavaCacheService.class
 com/agileboot/domain/lab/user/db/LabUserEntity$Identity.class
 com/agileboot/domain/system/menu/dto/TransitionDTO.class
@@ -176,6 +183,7 @@ com/agileboot/domain/common/dto/TokenDTO.class
 com/agileboot/domain/common/dto/UploadDTO.class
 com/agileboot/domain/system/role/db/SysRoleMapper.class
 com/agileboot/domain/system/monitor/dto/RedisCacheInfoDTO.class
+com/agileboot/domain/lab/relationship/db/LabUserRelationshipEntity$RelationshipType.class
 com/agileboot/domain/lab/achievement/db/LabAchievementEntity.class
 com/agileboot/domain/system/role/command/UpdateStatusCommand.class
 com/agileboot/domain/lab/achievement/db/LabAchievementEntity$ProjectType.class

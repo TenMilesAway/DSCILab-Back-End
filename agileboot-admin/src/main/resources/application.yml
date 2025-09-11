@@ -31,6 +31,7 @@ agileboot:
     redis: false
   auth:
     use-lab-only: true
+  traceRequestIdKey: traceId
 
 
   flyway:

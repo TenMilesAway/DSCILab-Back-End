@@ -12,6 +12,7 @@ com/agileboot/admin/customize/aop/accessLog/AccessLogAspect.class
 com/agileboot/admin/customize/service/permission/MenuPermissionService.class
 com/agileboot/admin/controller/lab/LabAchievementAuthorController.class
 com/agileboot/admin/customize/aop/accessLog/OperationLogModel.class
+com/agileboot/admin/controller/lab/LabUserRelationshipController.class
 com/agileboot/admin/customize/service/permission/model/checker/DeptTreeDataPermissionChecker.class
 com/agileboot/admin/controller/system/SysUserController.class
 com/agileboot/admin/controller/open/OpenLabController.class

@@ -1,5 +1,6 @@
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-admin/src/main/java/com/agileboot/admin/customize/service/permission/model/checker/CustomDataPermissionChecker.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-admin/src/main/java/com/agileboot/admin/AgileBootAdminApplication.java
+/Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-admin/src/main/java/com/agileboot/admin/controller/lab/LabUserRelationshipController.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-admin/src/main/java/com/agileboot/admin/controller/open/OpenAchievementController.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-admin/src/main/java/com/agileboot/admin/customize/service/login/UserDetailsServiceImpl.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-admin/src/main/java/com/agileboot/admin/customize/async/AsyncTaskFactory.java

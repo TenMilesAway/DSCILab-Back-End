@@ -226,10 +226,8 @@ public class LabUserCrudController extends BaseController {
         // 上传文件到头像目录
         String photoUrl = FileUploadUtils.upload(UploadSubDir.AVATAR_PATH, file);
 
-        // 更新当前用户的头像
-        UpdateProfileCommand command = new UpdateProfileCommand();
-        command.setPhoto(photoUrl);
-        labUserCrudApplicationService.updateProfile(command);
+        // 仅更新当前用户的头像，不影响其他字段
+        labUserCrudApplicationService.updateProfilePhoto(photoUrl);
 
         return ResponseDTO.ok(new UploadFileDTO(photoUrl));
     }
@@ -250,11 +248,8 @@ public class LabUserCrudController extends BaseController {
         // 上传文件到头像目录
         String photoUrl = FileUploadUtils.upload(UploadSubDir.AVATAR_PATH, file);
 
-        // 更新指定用户的头像
-        UpdateLabUserCommand command = new UpdateLabUserCommand();
-        command.setId(userId);
-        command.setPhoto(photoUrl);
-        labUserCrudApplicationService.updateUser(command);
+        // 更新指定用户的头像（直接更新，避免验证其他必填字段）
+        labUserCrudApplicationService.updateUserPhoto(userId, photoUrl);
 
         return ResponseDTO.ok(new UploadFileDTO(photoUrl));
     }

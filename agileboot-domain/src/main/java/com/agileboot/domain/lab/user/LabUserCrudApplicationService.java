@@ -140,7 +140,8 @@ public class LabUserCrudApplicationService {
         user.setStudentNumber(normalizeBlankToNull(command.getStudentNumber()));
         user.setRealName(command.getRealName());
         user.setEnglishName(normalizeBlankToNull(command.getEnglishName()));
-        user.setGender(command.getGender());
+        // 对于不能为null的字段，使用默认值
+        user.setGender(command.getGender() != null ? command.getGender() : 0); // 默认值0=未知
         user.setIdentity(command.getIdentity());
         user.setAcademicStatus(command.getAcademicStatus());
         user.setResearchArea(normalizeBlankToNull(command.getResearchArea()));
@@ -162,32 +163,9 @@ public class LabUserCrudApplicationService {
             user.setUpdaterId(loginUser.getUserId());
         }
 
-        // 使用UpdateWrapper强制更新null值，对于NOT NULL字段设置默认值
-        com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper<LabUserEntity> updateWrapper =
-            new com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper<>();
-        updateWrapper.eq("id", user.getId())
-            .set("student_number", user.getStudentNumber())
-            .set("real_name", user.getRealName())
-            .set("english_name", user.getEnglishName())
-            .set("gender", user.getGender() != null ? user.getGender() : 0) // 默认值0=未知
-            .set("identity", user.getIdentity())
-            .set("academic_status", user.getAcademicStatus())
-            .set("research_area", user.getResearchArea())
-            .set("phone", user.getPhone())
-            .set("email", user.getEmail())
-            .set("status", user.getStatus())
-            .set("enrollment_year", user.getEnrollmentYear())
-            .set("graduation_year", user.getGraduationYear())
-            .set("graduation_dest", user.getGraduationDest())
-            .set("photo", user.getPhoto())
-            .set("resume", user.getResume())
-            .set("homepage_url", user.getHomepageUrl())
-            .set("orcid", user.getOrcid())
-            .set("is_active", user.getIsActive())
-            .set("updater_id", user.getUpdaterId())
-            .set("update_time", new java.util.Date());
-
-        labUserService.update(updateWrapper);
+        // 管理员更新用户信息 - 使用实体更新方式支持清空字段
+        user.setUpdateTime(new java.util.Date());
+        labUserService.updateById(user);
     }
 
     /**
@@ -223,7 +201,8 @@ public class LabUserCrudApplicationService {
         user.setStudentNumber(normalizeBlankToNull(command.getStudentNumber()));
         user.setRealName(command.getRealName());
         user.setEnglishName(normalizeBlankToNull(command.getEnglishName()));
-        user.setGender(command.getGender());
+        // 对于不能为null的字段，使用默认值
+        user.setGender(command.getGender() != null ? command.getGender() : 0); // 默认值0=未知
         user.setAcademicStatus(command.getAcademicStatus());
         user.setResearchArea(normalizeBlankToNull(command.getResearchArea()));
         user.setPhone(normalizeBlankToNull(command.getPhone()));
@@ -238,26 +217,59 @@ public class LabUserCrudApplicationService {
 
         user.setUpdaterId(loginUser.getUserId());
 
-        // 使用UpdateWrapper强制更新null值，对于NOT NULL字段设置默认值
+        // 更新个人信息 - 支持清空字段（传null值）
+        // 使用实体更新方式，确保null值能够正确更新到数据库
+        user.setUpdateTime(new java.util.Date());
+        labUserService.updateById(user);
+    }
+
+    /**
+     * 更新个人头像（仅更新photo字段）
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void updateProfilePhoto(String photoUrl) {
+        SystemLoginUser loginUser = AuthenticationUtils.getSystemLoginUser();
+        Long userId = loginUser.getUserId();
+
+        LabUserEntity user = labUserService.getById(userId);
+        if (user == null) {
+            throw new ApiException(ErrorCode.Business.USER_NON_EXIST, userId.toString());
+        }
+
+        // 仅更新photo字段
         com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper<LabUserEntity> updateWrapper =
             new com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper<>();
-        updateWrapper.eq("id", user.getId())
-            .set("student_number", user.getStudentNumber())
-            .set("real_name", user.getRealName())
-            .set("english_name", user.getEnglishName())
-            .set("gender", user.getGender() != null ? user.getGender() : 0) // 默认值0=未知
-            .set("academic_status", user.getAcademicStatus())
-            .set("research_area", user.getResearchArea())
-            .set("phone", user.getPhone())
-            .set("email", user.getEmail())
-            .set("enrollment_year", user.getEnrollmentYear())
-            .set("graduation_year", user.getGraduationYear())
-            .set("graduation_dest", user.getGraduationDest())
-            .set("photo", user.getPhoto())
-            .set("resume", user.getResume())
-            .set("homepage_url", user.getHomepageUrl())
-            .set("orcid", user.getOrcid())
-            .set("updater_id", user.getUpdaterId())
+        updateWrapper.eq("id", userId)
+            .set("photo", normalizeBlankToNull(photoUrl))
+            .set("updater_id", userId)
+            .set("update_time", new java.util.Date());
+
+        labUserService.update(updateWrapper);
+    }
+
+    /**
+     * 更新用户头像（仅更新photo字段）
+     *
+     * @param userId 用户ID
+     * @param photoUrl 头像URL
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void updateUserPhoto(Long userId, String photoUrl) {
+        LabUserEntity user = labUserService.getById(userId);
+        if (user == null) {
+            throw new ApiException(ErrorCode.Business.USER_NON_EXIST, userId.toString());
+        }
+
+        // 设置更新人
+        SystemLoginUser loginUser = AuthenticationUtils.getSystemLoginUser();
+        Long updaterId = loginUser != null ? loginUser.getUserId() : null;
+
+        // 仅更新photo字段
+        com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper<LabUserEntity> updateWrapper =
+            new com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper<>();
+        updateWrapper.eq("id", userId)
+            .set("photo", normalizeBlankToNull(photoUrl))
+            .set("updater_id", updaterId)
             .set("update_time", new java.util.Date());
 
         labUserService.update(updateWrapper);
