@@ -1,0 +1,96 @@
+# 生产环境配置
+spring:
+    datasource:
+        type: com.alibaba.druid.pool.DruidDataSource
+        driverClassName: com.mysql.cj.jdbc.Driver
+        druid:
+            webStatFilter:
+                enabled: false  # 生产环境关闭监控
+            statViewServlet:
+                enabled: false  # 生产环境关闭监控
+            filter:
+                stat:
+                    enabled: true
+                    log-slow-sql: true
+                    slow-sql-millis: 2000
+                    merge-sql: true
+                wall:
+                    config:
+                        multi-statement-allow: true
+        dynamic:
+            primary: master
+            strict: false
+            druid:
+                # 生产环境连接池配置
+                initialSize: 10
+                minIdle: 20
+                maxActive: 50
+                maxWait: 60000
+                timeBetweenEvictionRunsMillis: 60000
+                minEvictableIdleTimeMillis: 300000
+                maxEvictableIdleTimeMillis: 900000
+                validationQuery: SELECT 1 FROM DUAL
+                testWhileIdle: true
+                testOnBorrow: false
+                testOnReturn: false
+            datasource:
+                # 主库数据源 - 生产环境配置
+                master:
+                    url: jdbc:mysql://localhost:3306/web?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8
+                    username: ${DB_USERNAME:root}
+                    password: ${DB_PASSWORD:your_password}
+
+    # Redis配置 - 生产环境
+    redis:
+        host: ${REDIS_HOST:localhost}
+        port: ${REDIS_PORT:6379}
+        database: ${REDIS_DATABASE:0}
+        password: ${REDIS_PASSWORD:your_redis_password}
+        timeout: 10s
+        lettuce:
+            pool:
+                min-idle: 5
+                max-idle: 20
+                max-active: 50
+                max-wait: -1ms
+
+    flyway:
+        enabled: true
+        locations: classpath:db/migration
+        baseline-on-migrate: true
+        table: flyway_schema_history
+
+# 日志配置
+logging:
+    level:
+        root: INFO
+        com.agileboot: INFO
+        org.springframework.security: WARN
+    file:
+        path: /var/log/agileboot
+    pattern:
+        file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"
+
+agileboot:
+    auth:
+        use-lab-only: true
+    # 生产环境文件存储路径
+    file-base-dir: /opt/agileboot/files
+    api-prefix: ""
+    demo-enabled: false
+    # 生产环境开启RSA加密
+    rsa-enabled: true
+    traceRequestIdKey: Request-Id
+
+# Swagger配置 - 生产环境关闭
+springdoc:
+    swagger-ui:
+        enabled: false  # 生产环境关闭Swagger UI
+    api-docs:
+        enabled: false  # 生产环境关闭API文档
+
+# Token配置
+token:
+    header: Authorization
+    secret: ${JWT_SECRET:your_jwt_secret_key_here_should_be_very_long_and_secure}
+    autoRefreshTime: 20

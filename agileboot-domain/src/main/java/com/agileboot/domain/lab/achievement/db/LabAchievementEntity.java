@@ -71,9 +71,9 @@ public class LabAchievementEntity extends BaseEntity<LabAchievementEntity> {
     @TableField("project_end_date")
     private LocalDate projectEndDate;
 
-    @Schema(description = "封面图URL")
-    @TableField("cover_url")
-    private String coverUrl;
+    @Schema(description = "参考文献/引用信息")
+    @TableField("reference")
+    private String reference;
 
     @Schema(description = "外部链接URL")
     @TableField("link_url")
@@ -114,6 +114,7 @@ public class LabAchievementEntity extends BaseEntity<LabAchievementEntity> {
     @Schema(description = "扩展信息（JSON）")
     @TableField("extra")
     private String extra;
+
     @Schema(description = "是否删除")
     @TableLogic
     @TableField("deleted")

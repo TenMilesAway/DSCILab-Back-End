@@ -194,7 +194,7 @@ public class LabAchievementApplicationService {
         entity.setPublishDate(parseYearToLocalDate(command.getPublishDate()));
         entity.setProjectStartDate(parseYearMonthToLocalDate(command.getProjectStartDate()));
         entity.setProjectEndDate(parseYearMonthToLocalDate(command.getProjectEndDate()));
-        entity.setCoverUrl(command.getCoverUrl());
+        entity.setReference(command.getReference());
         entity.setLinkUrl(command.getLinkUrl());
         entity.setGitUrl(command.getGitUrl());
         entity.setHomepageUrl(command.getHomepageUrl());
@@ -263,7 +263,7 @@ public class LabAchievementApplicationService {
         }
 
         entity.setVenue(command.getVenue());
-        entity.setCoverUrl(command.getCoverUrl());
+        entity.setReference(command.getReference());
         entity.setLinkUrl(command.getLinkUrl());
         entity.setGitUrl(command.getGitUrl());
         entity.setHomepageUrl(command.getHomepageUrl());
@@ -288,7 +288,7 @@ public class LabAchievementApplicationService {
             .set("publish_date", entity.getPublishDate())
             .set("project_start_date", entity.getProjectStartDate())
             .set("project_end_date", entity.getProjectEndDate())
-            .set("cover_url", entity.getCoverUrl())
+            .set("reference", entity.getReference())
             .set("link_url", entity.getLinkUrl())
             .set("git_url", entity.getGitUrl())
             .set("homepage_url", entity.getHomepageUrl())
@@ -339,17 +339,13 @@ public class LabAchievementApplicationService {
             throw new ApiException(ErrorCode.Business.COMMON_OBJECT_NOT_FOUND, "", "成果");
         }
 
-        // 权限检查：管理员 或 拥有者 或 第一作者(内部且author_order=1) 可删除
+        // 权限检查：所有实验室成员（lab_user表中的用户）都可以删除成果
+        // 管理员当然也可以删除
+        // 外部作者无法登录系统，因此无法调用到这个方法
+        // 能调用到这里说明用户已经通过身份验证，是实验室成员
         if (!isAdmin) {
-            boolean isOwner = currentUserId.equals(entity.getOwnerUserId());
-            boolean isFirstAuthor = false;
-            com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity rec = authorService.getAuthorRecord(id, currentUserId);
-            if (rec != null && Boolean.FALSE.equals(rec.getDeleted()) && Integer.valueOf(1).equals(rec.getAuthorOrder())) {
-                isFirstAuthor = true;
-            }
-            if (!(isOwner || isFirstAuthor)) {
-                throw new ApiException(ErrorCode.Business.PERMISSION_NOT_ALLOWED_TO_OPERATE);
-            }
+            // 所有实验室成员都可以删除成果，无需额外权限检查
+            // 这里可以添加日志记录删除操作
         }
 
         // 软删除（显式更新deleted与更新时间）

@@ -60,9 +60,9 @@ public class CreateLabAchievementCommand {
     @Schema(description = "项目结束年月（项目用），格式：yyyy-MM")
     private String projectEndDate;
 
-    @Schema(description = "封面图URL")
-    @Size(max = 500, message = "封面图URL长度不能超过500个字符")
-    private String coverUrl;
+    @Schema(description = "参考文献/引用信息")
+    @Size(max = 5000, message = "参考文献长度不能超过5000个字符")
+    private String reference;
 
     @Schema(description = "外部链接URL")
     @Size(max = 500, message = "外部链接URL长度不能超过500个字符")

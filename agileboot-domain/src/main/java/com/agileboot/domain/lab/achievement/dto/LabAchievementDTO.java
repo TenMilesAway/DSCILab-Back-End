@@ -61,8 +61,8 @@ public class LabAchievementDTO {
     @Schema(description = "项目结束日期（项目用）")
     private LocalDate projectEndDate;
 
-    @Schema(description = "封面图URL")
-    private String coverUrl;
+    @Schema(description = "参考文献/引用信息")
+    private String reference;
 
     @Schema(description = "外部链接URL")
     private String linkUrl;
@@ -130,7 +130,7 @@ public class LabAchievementDTO {
         dto.setPublishDate(entity.getPublishDate());
         dto.setProjectStartDate(entity.getProjectStartDate());
         dto.setProjectEndDate(entity.getProjectEndDate());
-        dto.setCoverUrl(entity.getCoverUrl());
+        dto.setReference(entity.getReference());
         dto.setLinkUrl(entity.getLinkUrl());
         dto.setGitUrl(entity.getGitUrl());
         dto.setHomepageUrl(entity.getHomepageUrl());

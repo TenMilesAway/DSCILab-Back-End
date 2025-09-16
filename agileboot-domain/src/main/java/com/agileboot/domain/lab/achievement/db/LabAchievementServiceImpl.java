@@ -29,17 +29,10 @@ public class LabAchievementServiceImpl extends ServiceImpl<LabAchievementMapper,
             return true;
         }
 
-        // 检查是否为拥有者
-        if (isOwner(achievementId, userId)) {
-            return true;
-        }
-
-        // 允许第一负责人（第一作者，author_order=1 且内部作者）编辑
-        LabAchievementAuthorEntity rec = authorService.getAuthorRecord(achievementId, userId);
-        if (rec != null && Boolean.FALSE.equals(rec.getDeleted()) && Integer.valueOf(1).equals(rec.getAuthorOrder())) {
-            return true;
-        }
-        return false;
+        // 新权限规则：所有实验室成员（lab_user表中的用户）都可以修改成果
+        // 只要用户ID存在且有效，就允许修改（因为能调用到这里说明用户已经通过身份验证）
+        // 外部作者无法登录系统，因此无法调用到这个方法
+        return true;
     }
 
     @Override
