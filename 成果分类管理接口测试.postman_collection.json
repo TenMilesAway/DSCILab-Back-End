@@ -1,0 +1,535 @@
+{
+	"info": {
+		"_postman_id": "achievement-category-api-tests",
+		"name": "成果分类管理接口测试",
+		"description": "实验室成果分类管理系统API测试集合",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. 认证管理",
+			"item": [
+				{
+					"name": "用户登录",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    if (response.data && response.data.access_token) {",
+									"        pm.collectionVariables.set('token', response.data.access_token);",
+									"        console.log('Token saved:', response.data.access_token);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"admin\",\n    \"password\": \"admin123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["login"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "2. 分类查询接口",
+			"item": [
+				{
+					"name": "获取分类树结构",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/lab/achievement-categories",
+							"host": ["{{baseUrl}}"],
+							"path": ["lab", "achievement-categories"]
+						}
+					}
+				},
+				{
+					"name": "获取分类树结构（包含未启用）",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/lab/achievement-categories?includeInactive=true",
+							"host": ["{{baseUrl}}"],
+							"path": ["lab", "achievement-categories"],
+							"query": [
+								{
+									"key": "includeInactive",
+									"value": "true"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "获取分类列表（分页）",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/lab/achievement-categories/list?pageNum=1&pageSize=10",
+							"host": ["{{baseUrl}}"],
+							"path": ["lab", "achievement-categories", "list"],
+							"query": [
+								{
+									"key": "pageNum",
+									"value": "1"
+								},
+								{
+									"key": "pageSize",
+									"value": "10"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "根据名称搜索分类",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/lab/achievement-categories/list?pageNum=1&pageSize=10&keyword=论文",
+							"host": ["{{baseUrl}}"],
+							"path": ["lab", "achievement-categories", "list"],
+							"query": [
+								{
+									"key": "pageNum",
+									"value": "1"
+								},
+								{
+									"key": "pageSize",
+									"value": "10"
+								},
+								{
+									"key": "keyword",
+									"value": "论文"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "根据ID获取分类详情",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/lab/achievement-categories/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["lab", "achievement-categories", "1"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "3. 分类管理接口",
+			"item": [
+				{
+					"name": "创建顶级分类",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    if (response.data && response.data.id) {",
+									"        pm.collectionVariables.set('testCategoryId', response.data.id);",
+									"        console.log('Test category ID saved:', response.data.id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"parentId\": null,\n    \"categoryCode\": \"TEST_CATEGORY\",\n    \"categoryName\": \"测试分类\",\n    \"description\": \"这是一个测试分类\",\n    \"sortOrder\": 99\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/lab/achievement-categories",
+							"host": ["{{baseUrl}}"],
+							"path": ["lab", "achievement-categories"]
+						}
+					}
+				},
+				{
+					"name": "创建获奖成果分类",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"parentId\": 0,\n    \"categoryCode\": \"AWARD\",\n    \"categoryName\": \"获奖成果\",\n    \"description\": \"各类获奖成果\",\n    \"sortOrder\": 5,\n    \"status\": \"ENABLED\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/lab/achievement-categories",
+							"host": ["{{baseUrl}}"],
+							"path": ["lab", "achievement-categories"]
+						}
+					}
+				},
+				{
+					"name": "创建子分类",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    if (response.data && response.data.id) {",
+									"        pm.collectionVariables.set('testSubCategoryId', response.data.id);",
+									"        console.log('Test sub category ID saved:', response.data.id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"parentId\": 1,\n    \"categoryCode\": \"NATURE\",\n    \"categoryName\": \"Nature论文\",\n    \"description\": \"Nature期刊发表的论文\",\n    \"sortOrder\": 1,\n    \"status\": \"ENABLED\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/lab/achievement-categories",
+							"host": ["{{baseUrl}}"],
+							"path": ["lab", "achievement-categories"]
+						}
+					}
+				},
+				{
+					"name": "更新分类信息",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"parentId\": 0,\n    \"categoryCode\": \"TEST_CATEGORY_UPDATED\",\n    \"categoryName\": \"测试分类（已更新）\",\n    \"description\": \"这是一个更新后的测试分类\",\n    \"sortOrder\": 100,\n    \"status\": \"ENABLED\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/lab/achievement-categories/{{testCategoryId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["lab", "achievement-categories", "{{testCategoryId}}"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "4. 字典接口",
+			"item": [
+				{
+					"name": "获取成果类型树（字典）",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/lab/dicts/achievement-categories",
+							"host": ["{{baseUrl}}"],
+							"path": ["lab", "dicts", "achievement-categories"]
+						}
+					}
+				},
+				{
+					"name": "获取成果类型扁平列表（字典）",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/lab/dicts/achievement-categories/flat",
+							"host": ["{{baseUrl}}"],
+							"path": ["lab", "dicts", "achievement-categories", "flat"]
+						}
+					}
+				},
+				{
+					"name": "获取学术身份字典",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/lab/dicts/academic-status",
+							"host": ["{{baseUrl}}"],
+							"path": ["lab", "dicts", "academic-status"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "5. 状态管理接口",
+			"item": [
+				{
+					"name": "禁用分类",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/lab/achievement-categories/18/status?active=false",
+							"host": ["{{baseUrl}}"],
+							"path": ["lab", "achievement-categories", "18", "status"],
+							"query": [
+								{
+									"key": "active",
+									"value": "false"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "启用分类",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/lab/achievement-categories/18/status?active=true",
+							"host": ["{{baseUrl}}"],
+							"path": ["lab", "achievement-categories", "18", "status"],
+							"query": [
+								{
+									"key": "active",
+									"value": "true"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "6. 删除测试接口",
+			"item": [
+				{
+					"name": "删除测试分类",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/lab/achievement-categories/{{testCategoryId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["lab", "achievement-categories", "{{testCategoryId}}"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "7. 错误测试用例",
+			"item": [
+				{
+					"name": "测试重复编码",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"parentId\": null,\n    \"categoryCode\": \"PAPER\",\n    \"categoryName\": \"重复编码测试\",\n    \"description\": \"测试重复编码\",\n    \"sortOrder\": 1\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/lab/achievement-categories",
+							"host": ["{{baseUrl}}"],
+							"path": ["lab", "achievement-categories"]
+						}
+					}
+				},
+				{
+					"name": "测试无效父分类",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"parentId\": 99999,\n    \"categoryCode\": \"INVALID_PARENT\",\n    \"categoryName\": \"无效父分类测试\",\n    \"description\": \"测试无效父分类\",\n    \"sortOrder\": 1\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/lab/achievement-categories",
+							"host": ["{{baseUrl}}"],
+							"path": ["lab", "achievement-categories"]
+						}
+					}
+				},
+				{
+					"name": "测试删除有子分类的分类",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/lab/achievement-categories/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["lab", "achievement-categories", "1"]
+						}
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "testCategoryId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "testSubCategoryId",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

@@ -55,6 +55,10 @@ public class LabAchievementEntity extends BaseEntity<LabAchievementEntity> {
     @TableField("project_type")
     private Integer projectType;
 
+    @Schema(description = "成果类型ID（新类型系统）")
+    @TableField("category_id")
+    private Long categoryId;
+
     @Schema(description = "期刊/会议/发布渠道")
     @TableField("venue")
     private String venue;

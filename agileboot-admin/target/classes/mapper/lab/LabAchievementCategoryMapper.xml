@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.agileboot.domain.lab.category.db.LabAchievementCategoryMapper">
+
+    <!-- 批量更新排序 -->
+    <update id="batchUpdateSortOrder">
+        <foreach collection="categories" item="category" separator=";">
+            UPDATE lab_achievement_category 
+            SET sort_order = #{category.sortOrder}, update_time = NOW()
+            WHERE id = #{category.id} AND deleted = 0
+        </foreach>
+    </update>
+
+</mapper>

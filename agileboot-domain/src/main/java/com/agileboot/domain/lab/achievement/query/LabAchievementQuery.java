@@ -30,11 +30,20 @@ public class LabAchievementQuery extends AbstractPageQuery<LabAchievementEntity>
     @Schema(description = "项目类型：1-8")
     private Integer projectType;
 
+    @Schema(description = "成果类型ID（新类型系统）")
+    private Long categoryId;
+
     @Schema(description = "是否对外发布")
     private Boolean published;
 
     @Schema(description = "是否已审核")
     private Boolean isVerified;
+
+    @Schema(description = "排序字段")
+    private String orderBy;
+
+    @Schema(description = "是否升序")
+    private Boolean isAsc;
 
     @Schema(description = "成果所有者ID")
     private Long ownerUserId;
@@ -82,6 +91,19 @@ public class LabAchievementQuery extends AbstractPageQuery<LabAchievementEntity>
                                       .le(dateEnd != null, "project_start_date", dateEnd))
             );
         }
+
+        // 排序
+        if (StrUtil.isNotBlank(orderBy)) {
+            if (Boolean.TRUE.equals(isAsc)) {
+                qw.orderByAsc(orderBy);
+            } else {
+                qw.orderByDesc(orderBy);
+            }
+        } else {
+            // 默认按创建时间降序
+            qw.orderByDesc("create_time");
+        }
+
         return qw;
     }
 

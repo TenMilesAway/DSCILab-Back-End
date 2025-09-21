@@ -15,10 +15,12 @@ import com.agileboot.domain.lab.user.db.LabUserService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import cn.hutool.core.bean.BeanUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import com.agileboot.domain.lab.category.CategoryCompatibilityService;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -61,6 +63,8 @@ public class LabAchievementApplicationService {
 
     private final com.agileboot.domain.lab.achievement.db.LabAchievementAuthorService authorService;
     private final LabUserService labUserService;
+    private final CategoryCompatibilityService categoryCompatibilityService;
+    private final com.agileboot.domain.lab.category.db.LabAchievementCategoryService categoryService;
 
     /**
      * 分页查询成果列表
@@ -81,6 +85,7 @@ public class LabAchievementApplicationService {
         wrapper.eq(query.getType() != null, LabAchievementEntity::getType, query.getType());
         wrapper.eq(query.getPaperType() != null, LabAchievementEntity::getPaperType, query.getPaperType());
         wrapper.eq(query.getProjectType() != null, LabAchievementEntity::getProjectType, query.getProjectType());
+        wrapper.eq(query.getCategoryId() != null, LabAchievementEntity::getCategoryId, query.getCategoryId());
 
         // 状态过滤
         wrapper.eq(query.getPublished() != null, LabAchievementEntity::getPublished, query.getPublished());
@@ -145,6 +150,39 @@ public class LabAchievementApplicationService {
     }
 
     /**
+     * 分页查询成果列表
+     */
+    public Page<LabAchievementDTO> getAchievementPage(LabAchievementQuery query) {
+        Page<LabAchievementEntity> entityPage = achievementService.page(query.toPage(), query.toQueryWrapper());
+
+        // 手动转换分页结果
+        Page<LabAchievementDTO> dtoPage = new Page<>();
+        dtoPage.setCurrent(entityPage.getCurrent());
+        dtoPage.setSize(entityPage.getSize());
+        dtoPage.setTotal(entityPage.getTotal());
+        dtoPage.setPages(entityPage.getPages());
+
+        // 转换记录
+        List<LabAchievementDTO> dtoList = entityPage.getRecords().stream()
+            .map(entity -> {
+                LabAchievementDTO dto = BeanUtil.copyProperties(entity, LabAchievementDTO.class);
+                // 设置分类信息
+                if (entity.getCategoryId() != null) {
+                    com.agileboot.domain.lab.category.db.LabAchievementCategoryEntity category =
+                        categoryService.getById(entity.getCategoryId());
+                    if (category != null) {
+                        dto.setCategoryName(category.getCategoryName());
+                    }
+                }
+                return dto;
+            })
+            .collect(Collectors.toList());
+
+        dtoPage.setRecords(dtoList);
+        return dtoPage;
+    }
+
+    /**
      * 获取成果详情
      */
     public LabAchievementDTO getAchievementDetail(Long id) {
@@ -179,6 +217,8 @@ public class LabAchievementApplicationService {
     @Transactional(rollbackFor = Exception.class)
     public Long createAchievement(CreateLabAchievementCommand command, Long currentUserId) {
         // 校验业务规则
+        // 基于 categoryId/旧字段做一致性预处理与自动补全
+        preprocessAchievementCommand(command);
         validateAchievementCommand(command);
 
         // 创建实体
@@ -190,6 +230,7 @@ public class LabAchievementApplicationService {
         entity.setType(command.getType());
         entity.setPaperType(command.getPaperType());
         entity.setProjectType(command.getProjectType());
+        entity.setCategoryId(command.getCategoryId());
         entity.setVenue(command.getVenue());
         entity.setPublishDate(parseYearToLocalDate(command.getPublishDate()));
         entity.setProjectStartDate(parseYearMonthToLocalDate(command.getProjectStartDate()));
@@ -243,6 +284,247 @@ public class LabAchievementApplicationService {
         }
 
         // 校验业务规则
+        // 
+        // 
+        // 
+        // 
+        // 
+        // 
+        // 
+        // 
+        // 
+        // 
+        // 
+        // 
+        // 
+        // 
+        // 
+        // 
+        // 
+        // 
+        // 
+        // 
+        // 
+        // 
+        // 
+        // 
+        // 
+        // 
+        // 
+        // 
+        // 
+        // 
+        //  
+        // 
+        //  
+        // 
+        // 
+        // 
+        // 
+        //  
+        // 
+        // 
+        // 
+        // 
+        // 
+        // 
+        // 
+        // 
+        // 
+        // 
+        //
+        //  
+        //   
+        //
+        //
+        //
+        // 
+        //
+        // 
+        //
+        //
+        // 
+        //
+        // 
+        // 
+        // 
+        //  
+        //  
+        // 
+        // 
+        // 
+        // 
+        //
+        //
+        // 
+        // 
+        // 
+        // 
+        // 
+        // 
+        //
+        // 
+        //
+        //
+        //
+        //
+        // 
+        // 
+        //
+        // 
+        //
+        // 
+        // 
+        // 
+        // 
+        // 
+        // 
+        // 
+        // 
+        // 
+        // 
+        //
+        // 
+        //
+        //
+        // 
+        // 
+        // 
+        //
+        // 
+        //
+        // 
+        // 
+        // 
+        //
+        //
+        // 
+        //
+        //
+        // 
+        // 
+        //
+        // 
+        // 
+        // 
+        // 
+        // 
+        //
+        //
+        // 
+        // 
+        // 
+        // 
+        // 
+        // 
+        //
+        // 
+        // 
+        //
+        //
+        // 
+        // 
+        // 
+        //
+        //
+        // 
+        // 
+        //
+        // 
+        // 
+        // 
+        // 
+        //
+        // 
+        // 
+        //
+        //
+        // 
+        // 
+        //
+        //
+        //
+        // 
+        //
+        // 
+        // 
+        // 
+        //
+        //
+        // 
+        //
+        // 
+        //
+        // 
+        //
+        // 
+        //
+        // 
+        // 
+        // 
+        //
+        // 
+        // 
+        // 
+        // 
+        // 
+        // 
+        // 
+        // 
+        // 
+        // 
+        // 
+        // 
+        //
+        // 
+        // 
+        // 
+        // 
+        // 
+        //
+        // 
+        // 
+        // 
+        //
+        // 
+        // 
+        // 
+        // 
+        // 
+        //
+        //
+        //
+        //
+        //
+        //
+        // 
+        //
+        //
+        // 
+        //
+        //
+        //
+        //
+        //
+        // 
+        // 
+        //
+        // 
+        // 
+        //
+        //
+        //
+        //
+        //
+        // 
+        //
+        // 
+        //
+        // 
+        //
+        //
+        //
+        preprocessAchievementCommand(command);
         validateAchievementCommand(command);
 
         // 更新字段（标题、描述等始终可改）
@@ -256,6 +538,7 @@ public class LabAchievementApplicationService {
             entity.setType(command.getType());
             entity.setPaperType(command.getPaperType());
             entity.setProjectType(command.getProjectType());
+            entity.setCategoryId(command.getCategoryId());
             entity.setPublishDate(parseYearToLocalDate(command.getPublishDate()));
             entity.setProjectStartDate(parseYearMonthToLocalDate(command.getProjectStartDate()));
             entity.setProjectEndDate(parseYearMonthToLocalDate(command.getProjectEndDate()));
@@ -284,6 +567,7 @@ public class LabAchievementApplicationService {
             .set("type", entity.getType())
             .set("paper_type", entity.getPaperType())
             .set("project_type", entity.getProjectType())
+            .set("category_id", entity.getCategoryId())
             .set("venue", entity.getVenue())
             .set("publish_date", entity.getPublishDate())
             .set("project_start_date", entity.getProjectStartDate())
@@ -426,37 +710,67 @@ public class LabAchievementApplicationService {
     }
 
     /**
+     * 预处理（强制只用 categoryId）
+     * - 必须传二级（叶子）categoryId；否则报错
+     * - 始终以 categoryId 为准，自动推导并覆盖 type 及 paperType/projectType（忽略客户端传入的旧字段）
+     */
+    private void preprocessAchievementCommand(CreateLabAchievementCommand command) {
+        Long categoryId = command.getCategoryId();
+        if (categoryId == null) {
+            throw new ApiException(ErrorCode.Client.COMMON_REQUEST_PARAMETERS_INVALID, "必须传二级分类ID：categoryId");
+        }
+        com.agileboot.domain.lab.category.CategoryCompatibilityService.LegacyTypeMapping mapping =
+            categoryCompatibilityService.getLegacyTypeByCategory(categoryId);
+        if (mapping == null) {
+            throw new ApiException(ErrorCode.Client.COMMON_REQUEST_PARAMETERS_INVALID,
+                "无效的成果类型ID: " + categoryId + "（请传有效的二级分类ID）");
+        }
+        Integer derivedType = mapping.getType();
+        Integer derivedSubType = mapping.getSubType();
+        if (derivedSubType == null) {
+            // 如果传的是一级分类：尝试自动降级为该大类下的“其他…”叶子分类
+            Long leafId = categoryCompatibilityService.resolveWritableLeafCategoryId(categoryId);
+            if (leafId == null || leafId.equals(categoryId)) {
+                throw new ApiException(ErrorCode.Client.COMMON_REQUEST_PARAMETERS_INVALID,
+                    "必须传二级分类ID：categoryId=" + categoryId + "（该分类下暂无二级分类）");
+            }
+            // 用可写入的叶子ID替换
+            command.setCategoryId(leafId);
+            categoryId = leafId;
+            // 重新计算映射
+            mapping = categoryCompatibilityService.getLegacyTypeByCategory(leafId);
+            if (mapping == null) {
+                throw new ApiException(ErrorCode.Client.COMMON_REQUEST_PARAMETERS_INVALID,
+                    "无效的成果类型ID: " + leafId + "（请传有效的二级分类ID）");
+            }
+            derivedType = mapping.getType();
+            derivedSubType = mapping.getSubType();
+        }
+
+        // 设置旧字段默认值（兼容数据库NOT NULL约束）
+        command.setType(3);  // 3表示其他成果类型
+        command.setPaperType(null);
+        command.setProjectType(null);
+    }
+
+    /**
      * 校验成果命令
      */
     private void validateAchievementCommand(CreateLabAchievementCommand command) {
-        if (command.getType() == 1) {
-            // 论文校验
-            if (command.getPaperType() == null) {
-                throw new ApiException(ErrorCode.Client.COMMON_REQUEST_PARAMETERS_INVALID, "论文类型不能为空");
-            }
-            if (command.getPublishDate() == null) {
-                throw new ApiException(ErrorCode.Client.COMMON_REQUEST_PARAMETERS_INVALID, "论文发表日期不能为空");
-            }
-            if (command.getProjectType() != null || command.getProjectStartDate() != null || command.getProjectEndDate() != null) {
-                throw new ApiException(ErrorCode.Client.COMMON_REQUEST_PARAMETERS_INVALID, "论文不能设置项目相关字段");
-            }
-        } else if (command.getType() == 2) {
-            // 项目校验
-            if (command.getProjectType() == null) {
-                throw new ApiException(ErrorCode.Client.COMMON_REQUEST_PARAMETERS_INVALID, "项目类型不能为空");
-            }
-            if (command.getProjectStartDate() == null) {
-                throw new ApiException(ErrorCode.Client.COMMON_REQUEST_PARAMETERS_INVALID, "项目开始日期不能为空");
-            }
-            if (StringUtils.hasText(command.getProjectEndDate())) {
-                java.time.LocalDate start = parseYearMonthToLocalDate(command.getProjectStartDate());
-                java.time.LocalDate end = parseYearMonthToLocalDate(command.getProjectEndDate());
-                if (end != null && start != null && end.isBefore(start)) {
-                    throw new ApiException(ErrorCode.Client.COMMON_REQUEST_PARAMETERS_INVALID, "项目结束日期不能早于开始日期");
-                }
-            }
-            if (command.getPaperType() != null || command.getPublishDate() != null) {
-                throw new ApiException(ErrorCode.Client.COMMON_REQUEST_PARAMETERS_INVALID, "项目不能设置论文相关字段");
+        // 基础校验：只验证必填字段
+        if (command.getCategoryId() == null) {
+            throw new ApiException(ErrorCode.Client.COMMON_REQUEST_PARAMETERS_INVALID, "成果分类不能为空");
+        }
+        if (command.getTitle() == null || command.getTitle().trim().isEmpty()) {
+            throw new ApiException(ErrorCode.Client.COMMON_REQUEST_PARAMETERS_INVALID, "成果标题不能为空");
+        }
+
+        // 日期校验：如果同时设置了项目开始和结束日期，检查逻辑
+        if (StringUtils.hasText(command.getProjectStartDate()) && StringUtils.hasText(command.getProjectEndDate())) {
+            java.time.LocalDate start = parseYearMonthToLocalDate(command.getProjectStartDate());
+            java.time.LocalDate end = parseYearMonthToLocalDate(command.getProjectEndDate());
+            if (end != null && start != null && end.isBefore(start)) {
+                throw new ApiException(ErrorCode.Client.COMMON_REQUEST_PARAMETERS_INVALID, "项目结束日期不能早于开始日期");
             }
         }
     }
@@ -672,6 +986,22 @@ public class LabAchievementApplicationService {
             wrapper.in(LabAchievementEntity::getId, allMatchingIds);
         }
 
+        // 按作者用户ID精确筛选（内部作者），与上面的作者名条件共同作用（取交集）
+        if (query.getAuthorUserId() != null) {
+            List<Long> idsByUser = authorService.lambdaQuery()
+                .eq(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getDeleted, false)
+                .eq(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getUserId, query.getAuthorUserId())
+                .list()
+                .stream()
+                .map(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getAchievementId)
+                .collect(Collectors.toList());
+            if (idsByUser.isEmpty()) {
+                return new PageDTO<>(java.util.Collections.emptyList(), 0L);
+            }
+            wrapper.in(LabAchievementEntity::getId, idsByUser);
+        }
+
+
         // 应用其他筛选条件
         if (StringUtils.hasText(query.getKeyword())) {
             wrapper.and(w -> w.like(LabAchievementEntity::getTitle, query.getKeyword())
@@ -680,6 +1010,8 @@ public class LabAchievementApplicationService {
         wrapper.eq(query.getType() != null, LabAchievementEntity::getType, query.getType());
         wrapper.eq(query.getPaperType() != null, LabAchievementEntity::getPaperType, query.getPaperType());
         wrapper.eq(query.getProjectType() != null, LabAchievementEntity::getProjectType, query.getProjectType());
+        // 新增：按分类ID筛选（公开接口）
+        wrapper.eq(query.getCategoryId() != null, LabAchievementEntity::getCategoryId, query.getCategoryId());
 
         // 日期范围过滤
         if (query.getDateStart() != null || query.getDateEnd() != null) {
@@ -701,6 +1033,35 @@ public class LabAchievementApplicationService {
         List<com.agileboot.domain.lab.achievement.dto.PublicAchievementDTO> dtoList = result.getRecords().stream()
             .map(com.agileboot.domain.lab.achievement.dto.PublicAchievementDTO::fromEntity)
             .collect(Collectors.toList());
+
+        // 填充分类名称
+        if (!dtoList.isEmpty()) {
+            List<Long> categoryIds = dtoList.stream()
+                .map(com.agileboot.domain.lab.achievement.dto.PublicAchievementDTO::getCategoryId)
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+
+            if (!categoryIds.isEmpty()) {
+                List<com.agileboot.domain.lab.category.db.LabAchievementCategoryEntity> categories =
+                    categoryService.lambdaQuery()
+                        .in(com.agileboot.domain.lab.category.db.LabAchievementCategoryEntity::getId, categoryIds)
+                        .eq(com.agileboot.domain.lab.category.db.LabAchievementCategoryEntity::getDeleted, false)
+                        .list();
+
+                Map<Long, String> categoryNameMap = categories.stream()
+                    .collect(Collectors.toMap(
+                        com.agileboot.domain.lab.category.db.LabAchievementCategoryEntity::getId,
+                        com.agileboot.domain.lab.category.db.LabAchievementCategoryEntity::getCategoryName
+                    ));
+
+                for (com.agileboot.domain.lab.achievement.dto.PublicAchievementDTO dto : dtoList) {
+                    if (dto.getCategoryId() != null) {
+                        dto.setCategoryName(categoryNameMap.get(dto.getCategoryId()));
+                    }
+                }
+            }
+        }
 
         // 填充作者信息（过滤可见性：外部作者全显示，内部作者仅显示visible=true）
         if (!dtoList.isEmpty()) {
@@ -749,6 +1110,15 @@ public class LabAchievementApplicationService {
 
         com.agileboot.domain.lab.achievement.dto.PublicAchievementDTO dto =
             com.agileboot.domain.lab.achievement.dto.PublicAchievementDTO.fromEntity(entity);
+
+        // 填充分类名称
+        if (entity.getCategoryId() != null) {
+            com.agileboot.domain.lab.category.db.LabAchievementCategoryEntity category =
+                categoryService.getById(entity.getCategoryId());
+            if (category != null) {
+                dto.setCategoryName(category.getCategoryName());
+            }
+        }
 
         // 获取作者列表（显示所有作者，不过滤可见性）
         List<com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity> authors =

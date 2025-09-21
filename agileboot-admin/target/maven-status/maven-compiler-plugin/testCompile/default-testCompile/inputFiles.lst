@@ -1,7 +1,4 @@
-/Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-admin/src/test/java/com/agileboot/admin/controller/lab/LabAchievementAuthorControllerTest.java
-/Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-admin/src/test/java/com/agileboot/admin/controller/open/OpenAchievementControllerTest.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-admin/src/test/java/com/agileboot/admin/customize/service/permission/DeptTreeDataPermissionCheckerTest.java
-/Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-admin/src/test/java/com/agileboot/admin/controller/lab/LabAchievementControllerTest.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-admin/src/test/java/com/agileboot/admin/customize/service/permission/CustomDataPermissionCheckerTest.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-admin/src/test/java/com/agileboot/admin/customize/service/permission/OnlySelfDataPermissionCheckerTest.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-admin/src/test/java/com/agileboot/admin/customize/service/permission/SingleDeptDataPermissionCheckerTest.java

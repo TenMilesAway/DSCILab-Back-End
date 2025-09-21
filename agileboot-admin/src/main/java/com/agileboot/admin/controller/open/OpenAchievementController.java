@@ -27,7 +27,7 @@ public class OpenAchievementController extends BaseController {
 
     private final LabAchievementApplicationService achievementApplicationService;
 
-    @Operation(summary = "公开成果列表", description = "获取公开成果列表，返回所有成果，支持关键词、类型、日期范围、作者姓名筛选")
+    @Operation(summary = "公开成果列表", description = "获取公开成果列表，返回所有成果，支持关键词、类型、分类、日期范围、作者姓名筛选")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "查询成功",
             content = @Content(schema = @Schema(implementation = PageDTO.class)))

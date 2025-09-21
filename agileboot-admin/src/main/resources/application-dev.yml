@@ -91,7 +91,7 @@ agileboot:
   auth:
     use-lab-only: true
   # 文件基路径
-  file-base-dir: /tmp/agileboot
+  file-base-dir: /opt/agileboot/files
   # 前端url请求转发前缀
   api-prefix: ""
   demo-enabled: false

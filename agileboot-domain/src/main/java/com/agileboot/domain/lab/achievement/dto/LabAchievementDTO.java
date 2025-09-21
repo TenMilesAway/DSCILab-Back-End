@@ -49,6 +49,15 @@ public class LabAchievementDTO {
     @Schema(description = "项目类型描述")
     private String projectTypeDesc;
 
+    @Schema(description = "成果类型ID（新类型系统）")
+    private Long categoryId;
+
+    @Schema(description = "成果类型名称（新类型系统）")
+    private String categoryName;
+
+    @Schema(description = "成果类型完整路径（新类型系统）")
+    private String categoryFullPath;
+
     @Schema(description = "期刊/会议/发布渠道")
     private String venue;
 
@@ -126,6 +135,7 @@ public class LabAchievementDTO {
         dto.setType(entity.getType());
         dto.setPaperType(entity.getPaperType());
         dto.setProjectType(entity.getProjectType());
+        dto.setCategoryId(entity.getCategoryId());
         dto.setVenue(entity.getVenue());
         dto.setPublishDate(entity.getPublishDate());
         dto.setProjectStartDate(entity.getProjectStartDate());

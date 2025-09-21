@@ -30,6 +30,9 @@ public class PublicAchievementQuery extends AbstractPageQuery<LabAchievementEnti
     @Schema(description = "项目类型：1-8")
     private Integer projectType;
 
+    @Schema(description = "成果分类ID（新分类系统）")
+    private Long categoryId;
+
     @Schema(description = "发表/开始日期范围-开始")
     private LocalDate dateStart;
 
@@ -38,6 +41,10 @@ public class PublicAchievementQuery extends AbstractPageQuery<LabAchievementEnti
 
     @Schema(description = "作者姓名（模糊搜索作者的中文名或英文名）")
     private String authorName;
+
+
+    @Schema(description = "作者用户ID（内部作者，精确筛选）")
+    private Long authorUserId;
 
     @Override
     public QueryWrapper<LabAchievementEntity> addQueryCondition() {
@@ -59,6 +66,9 @@ public class PublicAchievementQuery extends AbstractPageQuery<LabAchievementEnti
         }
         if (projectType != null) {
             qw.eq("project_type", projectType);
+        }
+        if (categoryId != null) {
+            qw.eq("category_id", categoryId);
         }
 
         // 日期范围：论文用 publish_date，项目用 project_start_date

@@ -49,6 +49,12 @@ public class PublicAchievementDTO {
     @Schema(description = "项目类型描述")
     private String projectTypeDesc;
 
+    @Schema(description = "成果分类ID（新分类系统）")
+    private Long categoryId;
+
+    @Schema(description = "成果分类名称（新分类系统）")
+    private String categoryName;
+
     @Schema(description = "发表场所/期刊/会议")
     private String venue;
 
@@ -111,6 +117,7 @@ public class PublicAchievementDTO {
         dto.setType(entity.getType());
         dto.setPaperType(entity.getPaperType());
         dto.setProjectType(entity.getProjectType());
+        dto.setCategoryId(entity.getCategoryId());
         dto.setVenue(entity.getVenue());
         dto.setPublishDate(entity.getPublishDate());
         dto.setProjectStartDate(entity.getProjectStartDate());
@@ -128,7 +135,20 @@ public class PublicAchievementDTO {
 
         // 设置类型描述
         if (entity.getType() != null) {
-            dto.setTypeDesc(entity.getType() == 1 ? "论文" : "项目");
+            switch (entity.getType()) {
+                case 1:
+                    dto.setTypeDesc("论文");
+                    break;
+                case 2:
+                    dto.setTypeDesc("项目");
+                    break;
+                case 3:
+                    dto.setTypeDesc("其他");
+                    break;
+                default:
+                    dto.setTypeDesc("未知");
+                    break;
+            }
         }
         if (entity.getPaperType() != null) {
             dto.setPaperTypeDesc(getPaperTypeDesc(entity.getPaperType()));

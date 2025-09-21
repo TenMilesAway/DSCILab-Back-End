@@ -47,6 +47,9 @@ public class CreateLabAchievementCommand {
     @Max(value = 8, message = "项目类型值必须在1-8之间")
     private Integer projectType;
 
+    @Schema(description = "成果类型ID（新类型系统，推荐使用）")
+    private Long categoryId;
+
     @Schema(description = "期刊/会议/发布渠道")
     @Size(max = 300, message = "发布渠道长度不能超过300个字符")
     private String venue;
