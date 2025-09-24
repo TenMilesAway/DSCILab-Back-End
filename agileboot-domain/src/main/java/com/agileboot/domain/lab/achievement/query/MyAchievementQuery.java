@@ -30,6 +30,12 @@ public class MyAchievementQuery extends AbstractPageQuery<LabAchievementEntity> 
     @Schema(description = "项目类型：1-8")
     private Integer projectType;
 
+    @Schema(description = "二级分类ID（叶子分类）")
+    private Long categoryId;
+
+    @Schema(description = "父级分类ID（一级分类）：聚合其所有二级分类")
+    private Long parentCategoryId;
+
     @Schema(description = "是否对外发布")
     private Boolean published;
 

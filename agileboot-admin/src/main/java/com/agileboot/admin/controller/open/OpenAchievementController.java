@@ -34,7 +34,16 @@ public class OpenAchievementController extends BaseController {
     })
     @GetMapping
     public ResponseDTO<PageDTO<PublicAchievementDTO>> list(
-        @Parameter(description = "查询条件") PublicAchievementQuery query) {
+        @Parameter(description = "查询条件") PublicAchievementQuery query,
+        @RequestParam(value = "parentCategoryId", required = false) Long parentCategoryId,
+        @RequestParam(value = "categoryId", required = false) Long categoryId) {
+        // 明确映射，避免个别场景下的绑定缺失
+        if (parentCategoryId != null) {
+            query.setParentCategoryId(parentCategoryId);
+        }
+        if (categoryId != null) {
+            query.setCategoryId(categoryId);
+        }
         PageDTO<PublicAchievementDTO> pageDTO = achievementApplicationService.getPublicAchievementList(query);
         return ResponseDTO.ok(pageDTO);
     }
@@ -51,4 +60,6 @@ public class OpenAchievementController extends BaseController {
         PublicAchievementDTO dto = achievementApplicationService.getPublicAchievementDetail(id);
         return ResponseDTO.ok(dto);
     }
+
+
 }

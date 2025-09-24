@@ -81,10 +81,21 @@ public class LabAchievementApplicationService {
                 .or().like(LabAchievementEntity::getKeywords, query.getKeyword()));
         }
 
-        // 类型过滤
-        wrapper.eq(query.getType() != null, LabAchievementEntity::getType, query.getType());
+        // 类型/分类过滤：当传入 categoryId 或 parentCategoryId 时，忽略 type 兼容参数
+        if (query.getType() != null && query.getCategoryId() == null && query.getParentCategoryId() == null) {
+            wrapper.eq(LabAchievementEntity::getType, query.getType());
+        }
         wrapper.eq(query.getPaperType() != null, LabAchievementEntity::getPaperType, query.getPaperType());
         wrapper.eq(query.getProjectType() != null, LabAchievementEntity::getProjectType, query.getProjectType());
+        // 父级分类聚合（管理员查询包含未启用的分类）
+        if (query.getParentCategoryId() != null && query.getCategoryId() == null) {
+            java.util.List<Long> descendantIds = categoryService.getDescendantIdsIncludeInactive(query.getParentCategoryId());
+            if (descendantIds == null || descendantIds.isEmpty()) {
+                return new PageDTO<>(java.util.Collections.emptyList(), 0L);
+            }
+            wrapper.in(LabAchievementEntity::getCategoryId, descendantIds);
+        }
+        // 二级分类精确
         wrapper.eq(query.getCategoryId() != null, LabAchievementEntity::getCategoryId, query.getCategoryId());
 
         // 状态过滤
@@ -632,24 +643,20 @@ public class LabAchievementApplicationService {
             // 这里可以添加日志记录删除操作
         }
 
-        // 软删除（显式更新deleted与更新时间）
-        boolean ok = achievementService.lambdaUpdate()
+        // 先删除成果（软删除）
+        boolean achievementDeleted = achievementService.lambdaUpdate()
             .eq(LabAchievementEntity::getId, id)
             .set(LabAchievementEntity::getDeleted, true)
             .set(LabAchievementEntity::getUpdateTime, new java.util.Date())
             .update();
 
-        // 作者清理：先硬删历史软删作者，再软删当前有效作者，保持与更新流程一致
-        authorService.hardDeleteDeletedByAchievementId(id);
-        authorService.lambdaUpdate()
-            .eq(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getAchievementId, id)
-            .eq(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getDeleted, false)
-            .set(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getDeleted, true)
-            .update();
-
-        if (!ok) {
+        if (!achievementDeleted) {
             throw new ApiException(ErrorCode.Business.COMMON_UNSUPPORTED_OPERATION, "成果删除失败");
         }
+
+        // 成果删除成功后，级联删除所有相关的作者关联记录
+        // 因为成果已经不存在，这些关联记录就没有意义了，应该彻底清理
+        authorService.hardDeleteAllByAchievementId(id);
     }
 
     /**
@@ -803,11 +810,27 @@ public class LabAchievementApplicationService {
             wrapper.and(w -> w.like(LabAchievementEntity::getTitle, query.getKeyword())
                 .or().like(LabAchievementEntity::getKeywords, query.getKeyword()));
         }
-        wrapper.eq(query.getType() != null, LabAchievementEntity::getType, query.getType());
+        // 当传入 categoryId 或 parentCategoryId 时，忽略 type 兼容参数
+        if (query.getType() != null && query.getCategoryId() == null && query.getParentCategoryId() == null) {
+            wrapper.eq(LabAchievementEntity::getType, query.getType());
+        }
+
+        //         
         wrapper.eq(query.getPaperType() != null, LabAchievementEntity::getPaperType, query.getPaperType());
         wrapper.eq(query.getProjectType() != null, LabAchievementEntity::getProjectType, query.getProjectType());
         wrapper.eq(query.getPublished() != null, LabAchievementEntity::getPublished, query.getPublished());
         wrapper.eq(query.getIsVerified() != null, LabAchievementEntity::getIsVerified, query.getIsVerified());
+
+        // 分类筛选（我的成果）：支持一级聚合或二级精确，包含未启用的分类
+        if (query.getParentCategoryId() != null && query.getCategoryId() == null) {
+            java.util.List<Long> descendantIds = categoryService.getDescendantIdsIncludeInactive(query.getParentCategoryId());
+            if (descendantIds == null || descendantIds.isEmpty()) {
+                return new PageDTO<>(java.util.Collections.emptyList(), 0L);
+            }
+            wrapper.in(LabAchievementEntity::getCategoryId, descendantIds);
+        }
+        wrapper.eq(query.getCategoryId() != null, LabAchievementEntity::getCategoryId, query.getCategoryId());
+
 
         // 仅在“我的成果”范围内添加姓名过滤（拥有者/作者）
         if (StringUtils.hasText(query.getOwnerName())) {
@@ -940,54 +963,9 @@ public class LabAchievementApplicationService {
         LambdaQueryWrapper<LabAchievementEntity> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(LabAchievementEntity::getDeleted, false);
 
-        // 按作者名查询：需要先查出符合条件的成果ID
-        if (StringUtils.hasText(query.getAuthorName())) {
-            // 1. 查询外部作者和内部作者记录中的name/nameEn匹配
-            List<Long> achievementIdsByAuthorName = authorService.lambdaQuery()
-                .eq(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getDeleted, false)
-                .and(w -> w.like(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getName, query.getAuthorName())
-                    .or().like(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getNameEn, query.getAuthorName()))
-                .list()
-                .stream()
-                .map(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getAchievementId)
-                .collect(Collectors.toList());
-
-            // 2. 查询内部作者的lab_user表中的real_name/english_name匹配
-            List<com.agileboot.domain.lab.user.db.LabUserEntity> matchingUsers = labUserService.lambdaQuery()
-                .eq(com.agileboot.domain.lab.user.db.LabUserEntity::getDeleted, false)
-                .and(w -> w.like(com.agileboot.domain.lab.user.db.LabUserEntity::getRealName, query.getAuthorName())
-                    .or().like(com.agileboot.domain.lab.user.db.LabUserEntity::getEnglishName, query.getAuthorName()))
-                .list();
-
-            List<Long> achievementIdsByUserName = new java.util.ArrayList<>();
-            if (!matchingUsers.isEmpty()) {
-                List<Long> userIds = matchingUsers.stream()
-                    .map(com.agileboot.domain.lab.user.db.LabUserEntity::getId)
-                    .collect(Collectors.toList());
-
-                achievementIdsByUserName = authorService.lambdaQuery()
-                    .eq(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getDeleted, false)
-                    .in(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getUserId, userIds)
-                    .list()
-                    .stream()
-                    .map(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getAchievementId)
-                    .collect(Collectors.toList());
-            }
-
-            // 3. 合并两个结果
-            Set<Long> allMatchingIds = new java.util.HashSet<>();
-            allMatchingIds.addAll(achievementIdsByAuthorName);
-            allMatchingIds.addAll(achievementIdsByUserName);
-
-            if (allMatchingIds.isEmpty()) {
-                // 没有找到匹配的作者，返回空结果
-                return new PageDTO<>(java.util.Collections.emptyList(), 0L);
-            }
-            wrapper.in(LabAchievementEntity::getId, allMatchingIds);
-        }
-
-        // 按作者用户ID精确筛选（内部作者），与上面的作者名条件共同作用（取交集）
+        // 按作者查询：优先使用精确的用户ID，如果没有提供则使用姓名模糊查询
         if (query.getAuthorUserId() != null) {
+            // 精确查询：按用户ID查询
             List<Long> idsByUser = authorService.lambdaQuery()
                 .eq(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getDeleted, false)
                 .eq(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getUserId, query.getAuthorUserId())
@@ -999,7 +977,55 @@ public class LabAchievementApplicationService {
                 return new PageDTO<>(java.util.Collections.emptyList(), 0L);
             }
             wrapper.in(LabAchievementEntity::getId, idsByUser);
+        } else if (StringUtils.hasText(query.getAuthorName())) {
+            // 按作者姓名查询：只查询作者表，不进行用户表反向查询，避免重名问题
+            Set<Long> matchedAchievementIds = new java.util.HashSet<>();
+
+            // 查询作者表中姓名匹配的记录
+            com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper<com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity> authorQuery =
+                authorService.lambdaQuery()
+                    .eq(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getDeleted, false)
+                    .and(w -> w.like(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getName, query.getAuthorName())
+                        .or().like(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getNameEn, query.getAuthorName()));
+
+            // 如果提供了邮箱，则进一步筛选
+            if (StringUtils.hasText(query.getAuthorEmail())) {
+                authorQuery.eq(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getEmail, query.getAuthorEmail());
+            }
+
+            List<com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity> authorMatches = authorQuery.list();
+
+            for (com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity author : authorMatches) {
+                if (author.getUserId() != null) {
+                    // 内部作者：必须验证邮箱一致性
+                    com.agileboot.domain.lab.user.db.LabUserEntity user = labUserService.getById(author.getUserId());
+                    if (user != null && !Boolean.TRUE.equals(user.getDeleted())) {
+                        // 只有当作者表和用户表的邮箱一致时才匹配
+                        if (author.getEmail() != null && user.getEmail() != null &&
+                            author.getEmail().equalsIgnoreCase(user.getEmail())) {
+                            matchedAchievementIds.add(author.getAchievementId());
+                        }
+                        // 其他情况都跳过，确保数据准确性
+                    }
+                } else {
+                    // 外部作者：只有在提供邮箱参数且匹配时才包含
+                    if (StringUtils.hasText(query.getAuthorEmail()) &&
+                        author.getEmail() != null &&
+                        author.getEmail().equalsIgnoreCase(query.getAuthorEmail())) {
+                        matchedAchievementIds.add(author.getAchievementId());
+                    }
+                    // 没有提供邮箱参数时，跳过所有外部作者，避免重名混淆
+                }
+            }
+
+            if (matchedAchievementIds.isEmpty()) {
+                // 没有找到匹配的作者，返回空结果
+                return new PageDTO<>(java.util.Collections.emptyList(), 0L);
+            }
+            wrapper.in(LabAchievementEntity::getId, matchedAchievementIds);
         }
+
+
 
 
         // 应用其他筛选条件
@@ -1007,9 +1033,21 @@ public class LabAchievementApplicationService {
             wrapper.and(w -> w.like(LabAchievementEntity::getTitle, query.getKeyword())
                 .or().like(LabAchievementEntity::getKeywords, query.getKeyword()));
         }
-        wrapper.eq(query.getType() != null, LabAchievementEntity::getType, query.getType());
+        // 当传入 categoryId 或 parentCategoryId 时，忽略 type 兼容参数
+        if (query.getType() != null && query.getCategoryId() == null && query.getParentCategoryId() == null) {
+            wrapper.eq(LabAchievementEntity::getType, query.getType());
+        }
         wrapper.eq(query.getPaperType() != null, LabAchievementEntity::getPaperType, query.getPaperType());
         wrapper.eq(query.getProjectType() != null, LabAchievementEntity::getProjectType, query.getProjectType());
+        // 新增：按父级分类ID聚合查询（一级分类 -> 所有后代二级分类）
+        if (query.getParentCategoryId() != null && query.getCategoryId() == null) {
+            java.util.List<Long> descendantIds = categoryService.getDescendantIds(query.getParentCategoryId());
+            if (descendantIds == null || descendantIds.isEmpty()) {
+                return new PageDTO<>(java.util.Collections.emptyList(), 0L);
+            }
+            wrapper.in(LabAchievementEntity::getCategoryId, descendantIds);
+        }
+
         // 新增：按分类ID筛选（公开接口）
         wrapper.eq(query.getCategoryId() != null, LabAchievementEntity::getCategoryId, query.getCategoryId());
 
@@ -1161,11 +1199,30 @@ public class LabAchievementApplicationService {
                 // 自动绑定 userId（如果未提供）
                 if (authorCmd.getUserId() == null) {
                     com.agileboot.domain.lab.user.db.LabUserEntity matched = null;
-                    if (authorCmd.getUsername() != null && !authorCmd.getUsername().trim().isEmpty()) {
-                        matched = labUserService.getByUsername(authorCmd.getUsername().trim());
+                    String uname = authorCmd.getUsername() == null ? null : authorCmd.getUsername().trim();
+                    String mail = authorCmd.getEmail() == null ? null : authorCmd.getEmail().trim();
+
+                    // 同时提供 username 与 email 时，要求二者一致才能绑定
+                    if (uname != null && !uname.isEmpty() && mail != null && !mail.isEmpty()) {
+                        com.agileboot.domain.lab.user.db.LabUserEntity byUsername = labUserService.getByUsername(uname);
+                        if (byUsername != null && mail.equalsIgnoreCase(byUsername.getEmail())) {
+                            matched = byUsername;
+                        } else {
+                            com.agileboot.domain.lab.user.db.LabUserEntity byEmail = labUserService.getByEmail(mail);
+                            if (byEmail != null && uname.equalsIgnoreCase(byEmail.getUsername())) {
+                                matched = byEmail;
+                            } else {
+                                throw new ApiException(ErrorCode.Client.COMMON_REQUEST_PARAMETERS_INVALID, "用户名与邮箱不一致，无法唯一绑定内部作者");
+                            }
+                        }
                     }
-                    if (matched == null && authorCmd.getEmail() != null && !authorCmd.getEmail().trim().isEmpty()) {
-                        matched = labUserService.getByEmail(authorCmd.getEmail().trim());
+
+                    // 仅提供其一时，按优先级逐项匹配
+                    if (matched == null && uname != null && !uname.isEmpty()) {
+                        matched = labUserService.getByUsername(uname);
+                    }
+                    if (matched == null && mail != null && !mail.isEmpty()) {
+                        matched = labUserService.getByEmail(mail);
                     }
                     if (matched == null && authorCmd.getPhone() != null && !authorCmd.getPhone().trim().isEmpty()) {
                         matched = labUserService.getByPhone(authorCmd.getPhone().trim());
@@ -1175,21 +1232,40 @@ public class LabAchievementApplicationService {
                     }
                     if (matched == null && authorCmd.getName() != null) {
                         matched = labUserService.getUniqueByRealName(authorCmd.getName());
-                        if (matched != null) {
-                            System.out.println("DEBUG: 自动绑定 " + authorCmd.getName() + " -> userId=" + matched.getId());
+                        if (matched == null) {
+                            // 检查是否存在重名用户
+                            List<com.agileboot.domain.lab.user.db.LabUserEntity> duplicateUsers = labUserService.lambdaQuery()
+                                .eq(com.agileboot.domain.lab.user.db.LabUserEntity::getRealName, authorCmd.getName())
+                                .eq(com.agileboot.domain.lab.user.db.LabUserEntity::getDeleted, false)
+                                .list();
+                            if (duplicateUsers.size() > 1) {
+                                // 存在重名用户，需要提供邮箱来区分
+                                throw new ApiException(ErrorCode.Client.COMMON_REQUEST_PARAMETERS_INVALID,
+                                    "存在多个名为 \"" + authorCmd.getName() + "\" 的用户，请提供邮箱以确定具体是哪一个用户");
+                            }
                         }
                     }
                     if (matched == null && authorCmd.getNameEn() != null) {
                         matched = labUserService.getUniqueByEnglishName(authorCmd.getNameEn());
-                        if (matched != null) {
-                            System.out.println("DEBUG: 自动绑定英文名 " + authorCmd.getNameEn() + " -> userId=" + matched.getId());
-                        }
                     }
                     if (matched != null) {
                         if (internalUsersInThisList.contains(matched.getId())) {
                             throw new ApiException(ErrorCode.Client.COMMON_REQUEST_PARAMETERS_INVALID, "同一内部作者不能重复：" + authorCmd.getName() + " 自动绑定到 userId=" + matched.getId());
                         }
+
+                        // 验证填写的邮箱是否与匹配用户的实际邮箱一致
+                        if (mail != null && !mail.isEmpty() && matched.getEmail() != null) {
+                            if (!mail.equalsIgnoreCase(matched.getEmail())) {
+                                throw new ApiException(ErrorCode.Client.COMMON_REQUEST_PARAMETERS_INVALID,
+                                    "作者 " + authorCmd.getName() + " 填写的邮箱与用户 " + matched.getRealName() + " 的实际邮箱不匹配，请确认后重新填写");
+                            }
+                        }
+
                         authorCmd.setUserId(matched.getId());
+                        // 如果自动绑定成功，使用用户的真实邮箱而不是填写的邮箱
+                        if (matched.getEmail() != null) {
+                            authorCmd.setEmail(matched.getEmail());
+                        }
                         internalUsersInThisList.add(matched.getId());
                     }
                 } else {
@@ -1205,6 +1281,7 @@ public class LabAchievementApplicationService {
                 entity.setUserId(authorCmd.getUserId());
                 entity.setName(authorCmd.getName());
                 entity.setNameEn(authorCmd.getNameEn());
+                entity.setEmail(authorCmd.getEmail());
                 entity.setAffiliation(authorCmd.getAffiliation());
                 entity.setAuthorOrder(authorCmd.getAuthorOrder());
                 entity.setIsCorresponding(Boolean.TRUE.equals(authorCmd.getIsCorresponding()));

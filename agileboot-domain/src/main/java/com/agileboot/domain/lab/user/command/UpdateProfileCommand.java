@@ -52,6 +52,11 @@ public class UpdateProfileCommand {
     @Size(max = 100, message = "邮箱长度不能超过100个字符")
     private String email;
 
+    @Schema(description = "状态：1=在读/在职,2=毕业/离职")
+    @Min(value = 1, message = "状态值必须在1-2之间")
+    @Max(value = 2, message = "状态值必须在1-2之间")
+    private Integer status;
+
     @Schema(description = "入学/入职年份")
     private Year enrollmentYear;
 

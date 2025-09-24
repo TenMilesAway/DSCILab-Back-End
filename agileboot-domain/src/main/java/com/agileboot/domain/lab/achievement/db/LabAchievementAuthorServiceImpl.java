@@ -71,4 +71,10 @@ public class LabAchievementAuthorServiceImpl extends ServiceImpl<LabAchievementA
         // 直接物理删除指定成果下指定用户的所有作者记录（使用自定义 Mapper SQL）
         return this.baseMapper.hardDeleteByAchievementIdAndUserId(achievementId, userId);
     }
+
+    @Override
+    public int hardDeleteAllByAchievementId(Long achievementId) {
+        // 直接物理删除指定成果的所有作者记录（使用自定义 Mapper SQL）
+        return this.baseMapper.hardDeleteAllByAchievementId(achievementId);
+    }
 }

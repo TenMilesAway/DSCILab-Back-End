@@ -3,6 +3,7 @@ package com.agileboot.domain.lab.achievement.command;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+import javax.validation.constraints.Email;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.Size;
 
@@ -20,6 +21,11 @@ public class UpdateAuthorCommand {
     @Schema(description = "英文姓名")
     @Size(max = 100, message = "英文姓名长度不能超过100")
     private String nameEn;
+
+    @Schema(description = "邮箱（用于确认作者身份）")
+    @Email(message = "邮箱格式不正确")
+    @Size(max = 100, message = "邮箱长度不能超过100")
+    private String email;
 
     @Schema(description = "单位/机构")
     @Size(max = 300, message = "单位长度不能超过300")

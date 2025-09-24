@@ -33,6 +33,9 @@ public class LabAchievementQuery extends AbstractPageQuery<LabAchievementEntity>
     @Schema(description = "成果类型ID（新类型系统）")
     private Long categoryId;
 
+    @Schema(description = "父级分类ID（一级分类），用于聚合查询其所有二级分类下的成果")
+    private Long parentCategoryId;
+
     @Schema(description = "是否对外发布")
     private Boolean published;
 

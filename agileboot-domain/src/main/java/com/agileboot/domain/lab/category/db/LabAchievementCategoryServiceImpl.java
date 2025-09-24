@@ -22,7 +22,7 @@ public class LabAchievementCategoryServiceImpl extends ServiceImpl<LabAchievemen
     @Override
     public List<LabAchievementCategoryEntity> getCategoryTree(boolean includeInactive) {
         List<LabAchievementCategoryEntity> allCategories;
-        
+
         if (includeInactive) {
             // 查询所有未删除的类型
             allCategories = lambdaQuery()
@@ -135,30 +135,49 @@ public class LabAchievementCategoryServiceImpl extends ServiceImpl<LabAchievemen
     public List<Long> getAncestorIds(Long categoryId) {
         List<Long> ancestorIds = new ArrayList<>();
         LabAchievementCategoryEntity current = getById(categoryId);
-        
+
         while (current != null && current.getParentId() != null) {
             ancestorIds.add(current.getParentId());
             current = getById(current.getParentId());
         }
-        
+
         return ancestorIds;
     }
 
     @Override
     public List<Long> getDescendantIds(Long categoryId) {
         List<Long> descendantIds = new ArrayList<>();
-        collectDescendantIds(categoryId, descendantIds);
+        collectDescendantIds(categoryId, descendantIds, false);
+        return descendantIds;
+    }
+
+    @Override
+    public List<Long> getDescendantIdsIncludeInactive(Long categoryId) {
+        List<Long> descendantIds = new ArrayList<>();
+        collectDescendantIds(categoryId, descendantIds, true);
         return descendantIds;
     }
 
     /**
      * 递归收集后代类型ID
      */
-    private void collectDescendantIds(Long parentId, List<Long> descendantIds) {
-        List<LabAchievementCategoryEntity> children = getChildrenByParentId(parentId);
+    private void collectDescendantIds(Long parentId, List<Long> descendantIds, boolean includeInactive) {
+        List<LabAchievementCategoryEntity> children;
+        if (includeInactive) {
+            // 查询所有子分类（包括未启用的）
+            children = lambdaQuery()
+                .eq(LabAchievementCategoryEntity::getParentId, parentId)
+                .eq(LabAchievementCategoryEntity::getDeleted, false)
+                .orderByAsc(LabAchievementCategoryEntity::getSortOrder)
+                .list();
+        } else {
+            // 只查询启用的子分类
+            children = getChildrenByParentId(parentId);
+        }
+
         for (LabAchievementCategoryEntity child : children) {
             descendantIds.add(child.getId());
-            collectDescendantIds(child.getId(), descendantIds);
+            collectDescendantIds(child.getId(), descendantIds, includeInactive);
         }
     }
 
@@ -188,7 +207,7 @@ public class LabAchievementCategoryServiceImpl extends ServiceImpl<LabAchievemen
         for (LabAchievementCategoryEntity category : categories) {
             List<LabAchievementCategoryEntity> children = groupByParent.getOrDefault(category.getId(), new ArrayList<>());
             category.setChildren(children);
-            
+
             // 递归设置子类型的子类型
             if (!children.isEmpty()) {
                 setChildren(children, groupByParent);

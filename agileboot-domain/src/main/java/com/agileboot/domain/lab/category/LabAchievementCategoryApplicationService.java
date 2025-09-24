@@ -254,6 +254,36 @@ public class LabAchievementCategoryApplicationService {
     }
 
     /**
+     * 强制删除"未分类"系统类型
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void forceDeleteUncategorizedType() {
+        // 查找"未分类"类型
+        LabAchievementCategoryEntity uncategorized = categoryService.getByCategoryCode("UNCATEGORIZED");
+        if (uncategorized == null) {
+            throw new ApiException(ErrorCode.Business.COMMON_OBJECT_NOT_FOUND, "未分类类型不存在");
+        }
+
+        // 检查是否被成果使用
+        if (categoryService.isUsedByAchievements(uncategorized.getId())) {
+            throw new ApiException(ErrorCode.Business.COMMON_UNSUPPORTED_OPERATION, "该类型存在成果，不允许删除");
+        }
+
+        // 检查是否有子类型
+        if (categoryService.hasChildren(uncategorized.getId())) {
+            throw new ApiException(ErrorCode.Business.COMMON_UNSUPPORTED_OPERATION, "该类型存在下级类型，不允许删除");
+        }
+
+        // 修改 category_code 以避免唯一约束冲突
+        String deletedCode = "UNCATEGORIZED_deleted_" + System.currentTimeMillis();
+        uncategorized.setCategoryCode(deletedCode);
+        categoryService.updateById(uncategorized);
+
+        // 执行软删除
+        categoryService.removeById(uncategorized.getId());
+    }
+
+    /**
      * 批量更新排序
      */
     @Transactional(rollbackFor = Exception.class)

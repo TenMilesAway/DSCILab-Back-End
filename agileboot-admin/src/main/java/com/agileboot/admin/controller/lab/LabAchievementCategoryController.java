@@ -137,4 +137,16 @@ public class LabAchievementCategoryController extends BaseController {
         categoryApplicationService.updateCategoryStatus(id, active);
         return ResponseDTO.ok();
     }
+
+    /**
+     * 强制删除"未分类"系统类型
+     */
+    @Operation(summary = "强制删除未分类类型", description = "强制删除系统内置的'未分类'类型")
+    @DeleteMapping("/force-delete-uncategorized")
+    @PreAuthorize("@labUserPermission.isAdmin()")
+    @AccessLog(title = "成果类型管理", businessType = BusinessTypeEnum.DELETE)
+    public ResponseDTO<Void> forceDeleteUncategorizedType() {
+        categoryApplicationService.forceDeleteUncategorizedType();
+        return ResponseDTO.ok();
+    }
 }

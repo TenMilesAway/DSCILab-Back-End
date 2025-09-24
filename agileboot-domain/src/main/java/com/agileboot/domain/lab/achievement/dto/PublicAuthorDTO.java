@@ -23,6 +23,9 @@ public class PublicAuthorDTO {
     @Schema(description = "英文姓名")
     private String nameEn;
 
+    @Schema(description = "邮箱（用于确认作者身份）")
+    private String email;
+
     @Schema(description = "单位/机构")
     private String affiliation;
 
@@ -51,6 +54,7 @@ public class PublicAuthorDTO {
         dto.setUserId(entity.getUserId());
         dto.setName(entity.getName());
         dto.setNameEn(entity.getNameEn());
+        dto.setEmail(entity.getEmail());
         dto.setAffiliation(entity.getAffiliation());
         dto.setAuthorOrder(entity.getAuthorOrder());
         dto.setIsCorresponding(entity.getIsCorresponding());

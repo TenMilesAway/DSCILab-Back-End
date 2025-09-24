@@ -33,6 +33,10 @@ public class PublicAchievementQuery extends AbstractPageQuery<LabAchievementEnti
     @Schema(description = "成果分类ID（新分类系统）")
     private Long categoryId;
 
+
+    @Schema(description = "父级分类ID（一级分类），用于聚合查询其所有二级分类下的成果")
+    private Long parentCategoryId;
+
     @Schema(description = "发表/开始日期范围-开始")
     private LocalDate dateStart;
 
@@ -42,6 +46,8 @@ public class PublicAchievementQuery extends AbstractPageQuery<LabAchievementEnti
     @Schema(description = "作者姓名（模糊搜索作者的中文名或英文名）")
     private String authorName;
 
+    @Schema(description = "作者邮箱（配合作者姓名进行精确匹配，避免重名问题）")
+    private String authorEmail;
 
     @Schema(description = "作者用户ID（内部作者，精确筛选）")
     private Long authorUserId;

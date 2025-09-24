@@ -41,6 +41,10 @@ public class LabAchievementAuthorEntity extends BaseEntity<LabAchievementAuthorE
     @TableField("name_en")
     private String nameEn;
 
+    @Schema(description = "邮箱（用于确认作者身份）")
+    @TableField("email")
+    private String email;
+
     @Schema(description = "单位/机构")
     @TableField("affiliation")
     private String affiliation;

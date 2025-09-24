@@ -94,11 +94,29 @@ public class LabAchievementAuthorController extends BaseController {
         // 自动绑定：当未提供 userId 时，优先按唯一键(username/email/phone/studentNumber)解析，再退回到唯一姓名匹配
         if (cmd.getUserId() == null) {
             LabUserEntity matched = null;
-            if (cmd.getUsername() != null && !cmd.getUsername().trim().isEmpty()) {
-                matched = labUserService.getByUsername(cmd.getUsername().trim());
+            String uname = cmd.getUsername() == null ? null : cmd.getUsername().trim();
+            String mail = cmd.getEmail() == null ? null : cmd.getEmail().trim();
+
+            // 同时提供 username 与 email 时，要求二者一致才绑定
+            if (uname != null && !uname.isEmpty() && mail != null && !mail.isEmpty()) {
+                LabUserEntity byUsername = labUserService.getByUsername(uname);
+                if (byUsername != null && mail.equalsIgnoreCase(byUsername.getEmail())) {
+                    matched = byUsername;
+                } else {
+                    LabUserEntity byEmail = labUserService.getByEmail(mail);
+                    if (byEmail != null && uname.equalsIgnoreCase(byEmail.getUsername())) {
+                        matched = byEmail;
+                    } else {
+                        throw new ApiException(ErrorCode.Client.COMMON_REQUEST_PARAMETERS_INVALID, "用户名与邮箱不一致，无法唯一绑定内部作者");
+                    }
+                }
             }
-            if (matched == null && cmd.getEmail() != null && !cmd.getEmail().trim().isEmpty()) {
-                matched = labUserService.getByEmail(cmd.getEmail().trim());
+
+            if (matched == null && uname != null && !uname.isEmpty()) {
+                matched = labUserService.getByUsername(uname);
+            }
+            if (matched == null && mail != null && !mail.isEmpty()) {
+                matched = labUserService.getByEmail(mail);
             }
             if (matched == null && cmd.getPhone() != null && !cmd.getPhone().trim().isEmpty()) {
                 matched = labUserService.getByPhone(cmd.getPhone().trim());
@@ -108,12 +126,35 @@ public class LabAchievementAuthorController extends BaseController {
             }
             if (matched == null) {
                 matched = labUserService.getUniqueByRealName(cmd.getName());
+                if (matched == null) {
+                    // 检查是否存在重名用户
+                    List<com.agileboot.domain.lab.user.db.LabUserEntity> duplicateUsers = labUserService.lambdaQuery()
+                        .eq(com.agileboot.domain.lab.user.db.LabUserEntity::getRealName, cmd.getName())
+                        .eq(com.agileboot.domain.lab.user.db.LabUserEntity::getDeleted, false)
+                        .list();
+                    if (duplicateUsers.size() > 1) {
+                        // 存在重名用户，需要提供邮箱来区分
+                        throw new ApiException(ErrorCode.Client.COMMON_REQUEST_PARAMETERS_INVALID,
+                            "存在多个名为 \"" + cmd.getName() + "\" 的用户，请提供邮箱以确定具体是哪一个用户");
+                    }
+                }
             }
             if (matched == null && cmd.getNameEn() != null) {
                 matched = labUserService.getUniqueByEnglishName(cmd.getNameEn());
             }
             if (matched != null && !authorService.isAuthor(achievementId, matched.getId())) {
+                // 验证填写的邮箱是否与匹配用户的实际邮箱一致
+                if (mail != null && !mail.isEmpty() && matched.getEmail() != null) {
+                    if (!mail.equalsIgnoreCase(matched.getEmail())) {
+                        throw new ApiException(ErrorCode.Client.COMMON_REQUEST_PARAMETERS_INVALID,
+                            "填写的邮箱与用户 " + matched.getRealName() + " 的实际邮箱不匹配，请确认后重新填写");
+                    }
+                }
                 cmd.setUserId(matched.getId());
+                // 如果自动绑定成功，使用用户的真实邮箱而不是填写的邮箱
+                if (matched.getEmail() != null) {
+                    cmd.setEmail(matched.getEmail());
+                }
             }
         }
 
@@ -133,6 +174,7 @@ public class LabAchievementAuthorController extends BaseController {
                     }
                     existed.setName(cmd.getName());
                     existed.setNameEn(cmd.getNameEn());
+                    existed.setEmail(cmd.getEmail());
                     existed.setAffiliation(cmd.getAffiliation());
                     existed.setAuthorOrder(cmd.getAuthorOrder());
                     existed.setIsCorresponding(Boolean.TRUE.equals(cmd.getIsCorresponding()));
@@ -151,6 +193,7 @@ public class LabAchievementAuthorController extends BaseController {
         e.setUserId(cmd.getUserId());
         e.setName(cmd.getName());
         e.setNameEn(cmd.getNameEn());
+        e.setEmail(cmd.getEmail());
         e.setAffiliation(cmd.getAffiliation());
         e.setAuthorOrder(cmd.getAuthorOrder());
         e.setIsCorresponding(Boolean.TRUE.equals(cmd.getIsCorresponding()));
@@ -179,6 +222,7 @@ public class LabAchievementAuthorController extends BaseController {
         if (cmd.getUserId() != null) e.setUserId(cmd.getUserId());
         if (cmd.getName() != null) e.setName(cmd.getName());
         if (cmd.getNameEn() != null) e.setNameEn(cmd.getNameEn());
+        if (cmd.getEmail() != null) e.setEmail(cmd.getEmail());
         if (cmd.getAffiliation() != null) e.setAffiliation(cmd.getAffiliation());
         if (cmd.getAuthorOrder() != null) e.setAuthorOrder(cmd.getAuthorOrder());
         if (cmd.getIsCorresponding() != null) e.setIsCorresponding(cmd.getIsCorresponding());

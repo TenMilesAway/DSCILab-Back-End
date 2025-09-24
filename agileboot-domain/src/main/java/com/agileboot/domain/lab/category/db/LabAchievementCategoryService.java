@@ -124,4 +124,12 @@ public interface LabAchievementCategoryService extends IService<LabAchievementCa
      * @return 后代类型ID列表
      */
     List<Long> getDescendantIds(Long categoryId);
+
+    /**
+     * 获取所有后代类型ID（包括未启用的）
+     *
+     * @param categoryId 类型ID
+     * @return 后代类型ID列表
+     */
+    List<Long> getDescendantIdsIncludeInactive(Long categoryId);
 }

@@ -71,7 +71,7 @@ public class LabUserEntity extends BaseEntity<LabUserEntity> {
     private String email;
 
     @Schema(description = "状态：1=在读/在职,2=毕业/离职")
-    @TableField("status")
+    @TableField(value = "status", updateStrategy = FieldStrategy.IGNORED)
     private Integer status;
 
     @Schema(description = "入学/入职年份")

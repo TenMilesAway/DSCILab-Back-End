@@ -22,4 +22,10 @@ public interface LabAchievementAuthorMapper extends BaseMapper<LabAchievementAut
      */
     @Delete("DELETE FROM lab_achievement_author WHERE achievement_id = #{achievementId} AND user_id = #{userId}")
     int hardDeleteByAchievementIdAndUserId(@Param("achievementId") Long achievementId, @Param("userId") Long userId);
+
+    /**
+     * 物理删除：删除指定成果的所有作者记录（用于成果删除时的级联删除）
+     */
+    @Delete("DELETE FROM lab_achievement_author WHERE achievement_id = #{achievementId}")
+    int hardDeleteAllByAchievementId(@Param("achievementId") Long achievementId);
 }

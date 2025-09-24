@@ -43,4 +43,9 @@ public interface LabAchievementAuthorService extends IService<LabAchievementAuth
      * 物理删除：删除指定成果下指定用户的所有作者记录（包括软删的）
      */
     int hardDeleteByAchievementIdAndUserId(Long achievementId, Long userId);
+
+    /**
+     * 物理删除：删除指定成果的所有作者记录（用于成果删除时的级联删除）
+     */
+    int hardDeleteAllByAchievementId(Long achievementId);
 }

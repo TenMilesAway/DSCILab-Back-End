@@ -50,7 +50,17 @@ public class LabAchievementController extends BaseController {
     @PreAuthorize("@permission.has('lab:achievement:list')")
     @AccessLog(title = "成果管理")
     public ResponseDTO<PageDTO<LabAchievementDTO>> list(
-        @Parameter(description = "查询条件") LabAchievementQuery query) {
+        @Parameter(description = "查询条件") LabAchievementQuery query,
+        @RequestParam(value = "parentCategoryId", required = false) Long parentCategoryId,
+        @RequestParam(value = "categoryId", required = false) Long categoryId) {
+
+        // 显式赋值，避免极端情况下的数据绑定丢失
+        if (parentCategoryId != null) {
+            query.setParentCategoryId(parentCategoryId);
+        }
+        if (categoryId != null) {
+            query.setCategoryId(categoryId);
+        }
 
         // 检查当前用户是否为管理员
         if (labUserPermission.isAdmin()) {
@@ -64,7 +74,7 @@ public class LabAchievementController extends BaseController {
                 throw new ApiException(ErrorCode.Client.COMMON_NO_AUTHORIZATION, "未找到当前用户信息");
             }
 
-            // 将LabAchievementQuery转换为MyAchievementQuery
+            // 将LabAchievementQuery转换为MyAchievementQuery（保留公共筛选 + 分类筛选）
             MyAchievementQuery myQuery = new MyAchievementQuery();
             myQuery.setPageNum(query.getPageNum());
             myQuery.setPageSize(query.getPageSize());
@@ -72,6 +82,8 @@ public class LabAchievementController extends BaseController {
             myQuery.setType(query.getType());
             myQuery.setPaperType(query.getPaperType());
             myQuery.setProjectType(query.getProjectType());
+            myQuery.setCategoryId(query.getCategoryId());
+            myQuery.setParentCategoryId(query.getParentCategoryId());
             myQuery.setPublished(query.getPublished());
             myQuery.setIsVerified(query.getIsVerified());
             myQuery.setDateStart(query.getDateStart());

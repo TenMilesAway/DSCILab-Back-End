@@ -207,6 +207,7 @@ public class LabUserCrudApplicationService {
         user.setResearchArea(normalizeBlankToNull(command.getResearchArea()));
         user.setPhone(normalizeBlankToNull(command.getPhone()));
         user.setEmail(normalizeBlankToNull(command.getEmail()));
+        user.setStatus(command.getStatus());
         user.setEnrollmentYear(command.getEnrollmentYear());
         user.setGraduationYear(command.getGraduationYear());
         user.setGraduationDest(normalizeBlankToNull(command.getGraduationDest()));
