@@ -90,8 +90,9 @@ public class LabAchievementV2Controller extends BaseController {
         c.setPublished(v2.getPublished());
         c.setExtra(v2.getExtra());
         c.setAuthors(v2.getAuthors());
+        c.setFundIds(v2.getFundIds());
+        c.setFundAssociations(v2.getFundAssociations());
         // 不设置 legacy 字段，由服务层按 categoryId 自动推导
         return c;
     }
 }
-

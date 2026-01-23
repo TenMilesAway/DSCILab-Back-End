@@ -13,8 +13,6 @@ import org.springframework.stereotype.Service;
 public class LabAchievementServiceImpl extends ServiceImpl<LabAchievementMapper, LabAchievementEntity>
     implements LabAchievementService {
 
-    private final LabAchievementAuthorService authorService;
-
     @Override
     public LabAchievementEntity getByIdNotDeleted(Long id) {
         return lambdaQuery()

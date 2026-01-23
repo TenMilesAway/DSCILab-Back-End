@@ -77,4 +77,20 @@ public class LabUserServiceImpl extends ServiceImpl<LabUserMapper, LabUserEntity
         return list != null && list.size() == 1 ? list.get(0) : null;
     }
 
+    @Override
+    public LabUserEntity findBestByRealName(String realName) {
+        if (realName == null || realName.trim().isEmpty()) {
+            return null;
+        }
+        return baseMapper.selectFirstByRealName(realName.trim());
+    }
+
+    @Override
+    public LabUserEntity findBestByEnglishName(String englishName) {
+        if (englishName == null || englishName.trim().isEmpty()) {
+            return null;
+        }
+        return baseMapper.selectFirstByEnglishName(englishName.trim());
+    }
+
 }

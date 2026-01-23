@@ -172,4 +172,24 @@
         ORDER BY status
     </select>
 
+    <!-- 根据中文名取最近的用户记录 -->
+    <select id="selectFirstByRealName" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM lab_user
+        WHERE real_name = #{realName}
+        AND deleted = 0
+        ORDER BY is_active DESC, update_time DESC
+        LIMIT 1
+    </select>
+
+    <!-- 根据英文名取最近的用户记录 -->
+    <select id="selectFirstByEnglishName" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM lab_user
+        WHERE english_name = #{englishName}
+        AND deleted = 0
+        ORDER BY is_active DESC, update_time DESC
+        LIMIT 1
+    </select>
+
 </mapper>

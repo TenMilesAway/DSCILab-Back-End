@@ -24,6 +24,9 @@ public class LabAchievementQuery extends AbstractPageQuery<LabAchievementEntity>
     @Schema(description = "成果类型：1=论文,2=项目")
     private Integer type;
 
+    @Schema(description = "是否排除项目类成果（true 时过滤 type=2）")
+    private Boolean excludeProject;
+
     @Schema(description = "论文类型：1-7")
     private Integer paperType;
 
@@ -67,6 +70,9 @@ public class LabAchievementQuery extends AbstractPageQuery<LabAchievementEntity>
         }
         if (type != null) {
             qw.eq("type", type);
+        }
+        if (Boolean.TRUE.equals(excludeProject)) {
+            qw.ne("type", 2);
         }
         if (paperType != null) {
             qw.eq("paper_type", paperType);

@@ -1,6 +1,7 @@
 package com.agileboot.domain.lab.achievement.dto;
 
 import com.agileboot.domain.lab.achievement.db.LabAchievementEntity;
+import com.agileboot.domain.lab.paper.dto.PublicPaperAuthorDTO;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
@@ -92,10 +93,13 @@ public class PublicAchievementDTO {
     private Boolean published;
 
     @Schema(description = "作者列表")
-    private List<PublicAuthorDTO> authors;
+    private List<PublicPaperAuthorDTO> authors;
 
     @Schema(description = "扩展信息")
     private String extra;
+
+    @Schema(description = "基金关联明细列表")
+    private List<LabFundAssociationDTO> fundAssociations;
 
     @Schema(description = "创建时间")
     private Date createTime;

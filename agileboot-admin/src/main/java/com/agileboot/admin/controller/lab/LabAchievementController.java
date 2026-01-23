@@ -7,9 +7,12 @@ import com.agileboot.common.core.dto.ResponseDTO;
 import org.springframework.security.access.prepost.PreAuthorize;
 import com.agileboot.domain.lab.achievement.LabAchievementApplicationService;
 import com.agileboot.domain.lab.achievement.command.CreateLabAchievementCommand;
+import com.agileboot.domain.lab.achievement.command.FundAssociationCommand;
 import com.agileboot.domain.lab.achievement.dto.LabAchievementDTO;
+import com.agileboot.domain.lab.achievement.dto.LabFundAssociationDTO;
 import com.agileboot.domain.lab.achievement.query.LabAchievementQuery;
 import com.agileboot.domain.lab.achievement.query.MyAchievementQuery;
+import com.agileboot.domain.lab.paper.LabPaperApplicationService;
 import com.agileboot.domain.lab.user.LabUserPermissionChecker;
 import com.agileboot.domain.lab.user.db.LabUserEntity;
 import com.agileboot.common.exception.ApiException;
@@ -25,6 +28,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
+import java.util.List;
+
 /**
  * 成果管理控制器（管理员端）
  */
@@ -37,6 +43,7 @@ import org.springframework.web.bind.annotation.*;
 public class LabAchievementController extends BaseController {
 
     private final LabAchievementApplicationService achievementApplicationService;
+    private final LabPaperApplicationService labPaperApplicationService;
     private final LabUserPermissionChecker labUserPermission;
 
 
@@ -51,9 +58,13 @@ public class LabAchievementController extends BaseController {
     @AccessLog(title = "成果管理")
     public ResponseDTO<PageDTO<LabAchievementDTO>> list(
         @Parameter(description = "查询条件") LabAchievementQuery query,
+        @RequestParam(value = "excludeProject", required = false) String excludeProject,
         @RequestParam(value = "parentCategoryId", required = false) Long parentCategoryId,
         @RequestParam(value = "categoryId", required = false) Long categoryId) {
 
+        if (excludeProject != null) {
+            query.setExcludeProject(Boolean.parseBoolean(excludeProject));
+        }
         // 显式赋值，避免极端情况下的数据绑定丢失
         if (parentCategoryId != null) {
             query.setParentCategoryId(parentCategoryId);
@@ -82,6 +93,7 @@ public class LabAchievementController extends BaseController {
             myQuery.setType(query.getType());
             myQuery.setPaperType(query.getPaperType());
             myQuery.setProjectType(query.getProjectType());
+            myQuery.setExcludeProject(query.getExcludeProject());
             myQuery.setCategoryId(query.getCategoryId());
             myQuery.setParentCategoryId(query.getParentCategoryId());
             myQuery.setPublished(query.getPublished());
@@ -186,5 +198,46 @@ public class LabAchievementController extends BaseController {
         boolean isAdmin = labUserPermission.isAdmin();
         achievementApplicationService.verifyAchievement(id, verified, current.getId(), isAdmin);
         return ResponseDTO.ok();
+    }
+
+    @Operation(summary = "查询论文基金关联", description = "查看指定论文成果的基金关联信息")
+    @GetMapping("/{id}/funds")
+    @PreAuthorize("@permission.has('lab:achievement:query')")
+    @AccessLog(title = "成果管理")
+    public ResponseDTO<List<LabFundAssociationDTO>> getFunds(@PathVariable Long id) {
+        return ResponseDTO.ok(labPaperApplicationService.getPaperFunds(id));
+    }
+
+    @Operation(summary = "更新论文基金关联", description = "替换指定论文成果的基金关联列表")
+    @PutMapping("/{id}/funds")
+    @PreAuthorize("@permission.has('lab:achievement:edit')")
+    @AccessLog(title = "成果管理")
+    public ResponseDTO<Void> updateFunds(@PathVariable Long id,
+                                         @RequestBody @Valid List<FundAssociationCommand> associations) {
+        LabUserEntity current = labUserPermission.getCurrentLabUser();
+        if (current == null) {
+            throw new ApiException(ErrorCode.Client.COMMON_NO_AUTHORIZATION, "/lab/achievements");
+        }
+        boolean isAdmin = labUserPermission.isAdmin();
+        labPaperApplicationService.updatePaperFunds(
+            id,
+            convertFundCommands(associations),
+            current.getId(),
+            isAdmin);
+        return ResponseDTO.ok();
+    }
+
+    private List<com.agileboot.domain.lab.paper.command.CreatePaperCommand.PaperFundCommand> convertFundCommands(
+        List<FundAssociationCommand> associations) {
+        if (associations == null) {
+            return java.util.Collections.emptyList();
+        }
+        return associations.stream().map(cmd -> {
+            com.agileboot.domain.lab.paper.command.CreatePaperCommand.PaperFundCommand pf =
+                new com.agileboot.domain.lab.paper.command.CreatePaperCommand.PaperFundCommand();
+            pf.setFundId(cmd.getFundId());
+            pf.setAmount(cmd.getAmount());
+            return pf;
+        }).collect(java.util.stream.Collectors.toList());
     }
 }

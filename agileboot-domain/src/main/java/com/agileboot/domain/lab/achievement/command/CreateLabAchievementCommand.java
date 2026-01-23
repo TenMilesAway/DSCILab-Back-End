@@ -1,5 +1,6 @@
 package com.agileboot.domain.lab.achievement.command;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
@@ -100,4 +101,19 @@ public class CreateLabAchievementCommand {
     @Schema(description = "作者列表（可选，创建时批量附带）")
     @Valid
     private List<CreateAuthorCommand> authors;
+
+    @Schema(description = "关联基金ID列表（仅论文类成果使用）")
+    private List<Long> fundIds;
+
+    @Schema(description = "基金关联列表（仅论文类成果使用）")
+    @Valid
+    private List<FundAssociationCommand> fundAssociations;
+
+    @Schema(hidden = true)
+    @JsonIgnore
+    private Integer resolvedType;
+
+    @Schema(hidden = true)
+    @JsonIgnore
+    private Integer resolvedSubType;
 }

@@ -1,0 +1,5 @@
+com/agileboot/admin/customize/service/permission/CustomDataPermissionCheckerTest.class
+com/agileboot/admin/customize/service/permission/OnlySelfDataPermissionCheckerTest.class
+com/agileboot/admin/customize/service/permission/DeptTreeDataPermissionCheckerTest.class
+com/agileboot/admin/config/AgileBootConfigTest.class
+com/agileboot/admin/customize/service/permission/SingleDeptDataPermissionCheckerTest.class

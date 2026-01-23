@@ -107,4 +107,14 @@ public interface LabUserMapper extends BaseMapper<LabUserEntity> {
     int hardDeleteById(@Param("id") Long id);
 
     java.util.List<java.util.Map<String, Object>> countByStatus();
+
+    /**
+     * 根据中文名取一条最新记录（允许重名）
+     */
+    LabUserEntity selectFirstByRealName(@Param("realName") String realName);
+
+    /**
+     * 根据英文名取一条最新记录（允许重名）
+     */
+    LabUserEntity selectFirstByEnglishName(@Param("englishName") String englishName);
 }

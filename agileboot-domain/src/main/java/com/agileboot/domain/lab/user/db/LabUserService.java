@@ -93,4 +93,14 @@ public interface LabUserService extends IService<LabUserEntity> {
      * 根据英文名唯一匹配用户；若匹配到且仅有1条则返回，否则返回null
      */
     LabUserEntity getUniqueByEnglishName(String englishName);
+
+    /**
+     * 根据中文名优先匹配一条用户（允许重名，按激活状态/更新时间倒序取第一条）
+     */
+    LabUserEntity findBestByRealName(String realName);
+
+    /**
+     * 根据英文名优先匹配一条用户（允许重名，按激活状态/更新时间倒序取第一条）
+     */
+    LabUserEntity findBestByEnglishName(String englishName);
 }

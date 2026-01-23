@@ -1,6 +1,8 @@
 package com.agileboot.domain.lab.achievement.dto;
 
 import com.agileboot.domain.lab.achievement.db.LabAchievementEntity;
+import com.agileboot.domain.lab.common.dto.AchievementTypeInfoDTO;
+import com.agileboot.domain.lab.paper.dto.LabPaperAuthorDTO;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
@@ -58,6 +60,9 @@ public class LabAchievementDTO {
     @Schema(description = "成果类型完整路径（新类型系统）")
     private String categoryFullPath;
 
+    @Schema(description = "统一的成果类型信息")
+    private AchievementTypeInfoDTO typeInfo = new AchievementTypeInfoDTO();
+
     @Schema(description = "期刊/会议/发布渠道")
     private String venue;
 
@@ -104,7 +109,13 @@ public class LabAchievementDTO {
     private Boolean isVerified;
 
     @Schema(description = "作者列表")
-    private List<LabAchievementAuthorDTO> authors = new java.util.ArrayList<>();
+    private List<LabPaperAuthorDTO> authors = new java.util.ArrayList<>();
+
+    @Schema(description = "关联基金ID列表")
+    private List<Long> fundIds = new java.util.ArrayList<>();
+
+    @Schema(description = "基金关联明细列表")
+    private List<LabFundAssociationDTO> fundAssociations = new java.util.ArrayList<>();
 
     @Schema(description = "当前用户在该成果中的可见性状态（仅在我的成果列表中有效）")
     private Boolean myVisibility;
@@ -136,6 +147,9 @@ public class LabAchievementDTO {
         dto.setPaperType(entity.getPaperType());
         dto.setProjectType(entity.getProjectType());
         dto.setCategoryId(entity.getCategoryId());
+        dto.getTypeInfo().setLegacyType(entity.getType());
+        dto.getTypeInfo().setLegacySubType(
+            entity.getType() != null && entity.getType() == 1 ? entity.getPaperType() : entity.getProjectType());
         dto.setVenue(entity.getVenue());
         dto.setPublishDate(entity.getPublishDate());
         dto.setProjectStartDate(entity.getProjectStartDate());
@@ -169,6 +183,7 @@ public class LabAchievementDTO {
             for (LabAchievementEntity.PaperType paperType : LabAchievementEntity.PaperType.values()) {
                 if (paperType.getCode().equals(entity.getPaperType())) {
                     dto.setPaperTypeDesc(paperType.getDesc());
+                    dto.getTypeInfo().setLegacySubTypeDesc(paperType.getDesc());
                     break;
                 }
             }
@@ -179,6 +194,7 @@ public class LabAchievementDTO {
             for (LabAchievementEntity.ProjectType projectType : LabAchievementEntity.ProjectType.values()) {
                 if (projectType.getCode().equals(entity.getProjectType())) {
                     dto.setProjectTypeDesc(projectType.getDesc());
+                    dto.getTypeInfo().setLegacySubTypeDesc(projectType.getDesc());
                     break;
                 }
             }

@@ -7,9 +7,9 @@ import com.agileboot.common.exception.ApiException;
 import com.agileboot.common.exception.error.ErrorCode;
 import com.agileboot.domain.lab.achievement.command.AddAuthorCommand;
 import com.agileboot.domain.lab.achievement.command.UpdateAuthorCommand;
-import com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity;
-import com.agileboot.domain.lab.achievement.db.LabAchievementAuthorService;
 import com.agileboot.domain.lab.achievement.db.LabAchievementService;
+import com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity;
+import com.agileboot.domain.lab.paper.author.LabPaperAuthorService;
 import com.agileboot.domain.lab.user.LabUserPermissionChecker;
 import com.agileboot.domain.lab.user.db.LabUserEntity;
 import com.agileboot.domain.lab.user.db.LabUserService;
@@ -37,7 +37,7 @@ import org.springframework.web.bind.annotation.*;
 public class LabAchievementAuthorController extends BaseController {
 
     private final LabAchievementService achievementService;
-    private final LabAchievementAuthorService authorService;
+    private final LabPaperAuthorService authorService;
     private final LabUserPermissionChecker labUserPermission;
     private final LabUserService labUserService;
 
@@ -62,9 +62,9 @@ public class LabAchievementAuthorController extends BaseController {
     @GetMapping
     @PreAuthorize("@permission.has('lab:achievement:query')")
     @AccessLog(title = "成果作者")
-    public ResponseDTO<List<LabAchievementAuthorEntity>> list(
+    public ResponseDTO<List<LabPaperAuthorEntity>> list(
         @Parameter(description = "成果ID", required = true) @PathVariable Long achievementId) {
-        List<LabAchievementAuthorEntity> list = authorService.getAuthorsByAchievementId(achievementId);
+        List<LabPaperAuthorEntity> list = authorService.getAuthorsByPaperId(achievementId);
         return ResponseDTO.ok(list);
     }
 
@@ -87,7 +87,7 @@ public class LabAchievementAuthorController extends BaseController {
             throw new ApiException(ErrorCode.Client.COMMON_REQUEST_PARAMETERS_INVALID, "外部作者必须提供姓名");
         }
         // 校验顺序唯一
-        if (authorService.isAuthorOrderExists(achievementId, cmd.getAuthorOrder(), null)) {
+        if (authorService.existsOrder(achievementId, cmd.getAuthorOrder(), null)) {
             throw new ApiException(ErrorCode.Client.COMMON_REQUEST_PARAMETERS_INVALID, "作者顺序已存在");
         }
 
@@ -160,16 +160,16 @@ public class LabAchievementAuthorController extends BaseController {
 
         // 若绑定的是内部作者，检查是否已存在（包含软删）。
         if (cmd.getUserId() != null) {
-            LabAchievementAuthorEntity existed = authorService.lambdaQuery()
-                .eq(LabAchievementAuthorEntity::getAchievementId, achievementId)
-                .eq(LabAchievementAuthorEntity::getUserId, cmd.getUserId())
+            LabPaperAuthorEntity existed = authorService.lambdaQuery()
+                .eq(LabPaperAuthorEntity::getPaperId, achievementId)
+                .eq(LabPaperAuthorEntity::getUserId, cmd.getUserId())
                 .one();
             if (existed != null) {
                 if (Boolean.FALSE.equals(existed.getDeleted())) {
                     throw new ApiException(ErrorCode.Client.COMMON_REQUEST_PARAMETERS_INVALID, "该内部作者已存在于该成果");
                 } else {
                     // 复活软删记录，需校验顺序唯一（排除自身ID）
-                    if (authorService.isAuthorOrderExists(achievementId, cmd.getAuthorOrder(), existed.getId())) {
+                    if (authorService.existsOrder(achievementId, cmd.getAuthorOrder(), existed.getId())) {
                         throw new ApiException(ErrorCode.Client.COMMON_REQUEST_PARAMETERS_INVALID, "作者顺序已存在");
                     }
                     existed.setName(cmd.getName());
@@ -188,8 +188,8 @@ public class LabAchievementAuthorController extends BaseController {
             }
         }
 
-        LabAchievementAuthorEntity e = new LabAchievementAuthorEntity();
-        e.setAchievementId(achievementId);
+        LabPaperAuthorEntity e = new LabPaperAuthorEntity();
+        e.setPaperId(achievementId);
         e.setUserId(cmd.getUserId());
         e.setName(cmd.getName());
         e.setNameEn(cmd.getNameEn());
@@ -211,12 +211,12 @@ public class LabAchievementAuthorController extends BaseController {
     @Transactional(rollbackFor = Exception.class)
     public ResponseDTO<Void> update(@PathVariable Long achievementId, @PathVariable Long authorId, @Validated @RequestBody UpdateAuthorCommand cmd) {
         checkEditPermission(achievementId);
-        LabAchievementAuthorEntity e = authorService.getById(authorId);
-        if (e == null || Boolean.TRUE.equals(e.getDeleted()) || !achievementId.equals(e.getAchievementId())) {
+        LabPaperAuthorEntity e = authorService.getById(authorId);
+        if (e == null || Boolean.TRUE.equals(e.getDeleted()) || !achievementId.equals(e.getPaperId())) {
             throw new ApiException(ErrorCode.Business.COMMON_OBJECT_NOT_FOUND, "", "作者");
         }
         // 检查新顺序是否冲突
-        if (cmd.getAuthorOrder() != null && authorService.isAuthorOrderExists(achievementId, cmd.getAuthorOrder(), authorId)) {
+        if (cmd.getAuthorOrder() != null && authorService.existsOrder(achievementId, cmd.getAuthorOrder(), authorId)) {
             throw new ApiException(ErrorCode.Client.COMMON_REQUEST_PARAMETERS_INVALID, "作者顺序已存在");
         }
         if (cmd.getUserId() != null) e.setUserId(cmd.getUserId());
@@ -239,8 +239,8 @@ public class LabAchievementAuthorController extends BaseController {
     @Transactional(rollbackFor = Exception.class)
     public ResponseDTO<Void> delete(@PathVariable Long achievementId, @PathVariable Long authorId) {
         checkEditPermission(achievementId);
-        LabAchievementAuthorEntity e = authorService.getById(authorId);
-        if (e == null || Boolean.TRUE.equals(e.getDeleted()) || !achievementId.equals(e.getAchievementId())) {
+        LabPaperAuthorEntity e = authorService.getById(authorId);
+        if (e == null || Boolean.TRUE.equals(e.getDeleted()) || !achievementId.equals(e.getPaperId())) {
             throw new ApiException(ErrorCode.Business.COMMON_OBJECT_NOT_FOUND, "", "作者");
         }
         e.setDeleted(true);
@@ -258,11 +258,11 @@ public class LabAchievementAuthorController extends BaseController {
         if (newOrder == null || newOrder < 1) {
             throw new ApiException(ErrorCode.Client.COMMON_REQUEST_PARAMETERS_INVALID, "newOrder必须>=1");
         }
-        if (authorService.isAuthorOrderExists(achievementId, newOrder, authorId)) {
+        if (authorService.existsOrder(achievementId, newOrder, authorId)) {
             throw new ApiException(ErrorCode.Client.COMMON_REQUEST_PARAMETERS_INVALID, "作者顺序已存在");
         }
-        LabAchievementAuthorEntity e = authorService.getById(authorId);
-        if (e == null || Boolean.TRUE.equals(e.getDeleted()) || !achievementId.equals(e.getAchievementId())) {
+        LabPaperAuthorEntity e = authorService.getById(authorId);
+        if (e == null || Boolean.TRUE.equals(e.getDeleted()) || !achievementId.equals(e.getPaperId())) {
             throw new ApiException(ErrorCode.Business.COMMON_OBJECT_NOT_FOUND, "", "作者");
         }
         e.setAuthorOrder(newOrder);
@@ -277,8 +277,8 @@ public class LabAchievementAuthorController extends BaseController {
     @Transactional(rollbackFor = Exception.class)
     public ResponseDTO<Void> toggleVisibility(@PathVariable Long achievementId, @PathVariable Long authorId, @RequestParam Boolean visible) {
         checkEditPermission(achievementId);
-        LabAchievementAuthorEntity e = authorService.getById(authorId);
-        if (e == null || Boolean.TRUE.equals(e.getDeleted()) || !achievementId.equals(e.getAchievementId())) {
+        LabPaperAuthorEntity e = authorService.getById(authorId);
+        if (e == null || Boolean.TRUE.equals(e.getDeleted()) || !achievementId.equals(e.getPaperId())) {
             throw new ApiException(ErrorCode.Business.COMMON_OBJECT_NOT_FOUND, "", "作者");
         }
         e.setVisible(Boolean.TRUE.equals(visible));
@@ -286,4 +286,3 @@ public class LabAchievementAuthorController extends BaseController {
         return ResponseDTO.ok();
     }
 }
-

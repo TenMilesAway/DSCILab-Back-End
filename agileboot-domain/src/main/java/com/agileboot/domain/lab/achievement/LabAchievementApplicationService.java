@@ -4,12 +4,24 @@ import com.agileboot.common.core.page.PageDTO;
 import com.agileboot.common.exception.ApiException;
 import com.agileboot.common.exception.error.ErrorCode;
 import com.agileboot.domain.lab.achievement.command.CreateLabAchievementCommand;
+import com.agileboot.domain.lab.achievement.command.FundAssociationCommand;
 import com.agileboot.domain.lab.achievement.db.LabAchievementEntity;
 import com.agileboot.domain.lab.achievement.db.LabAchievementService;
-import com.agileboot.domain.lab.achievement.db.LabAchievementAuthorMapper;
 import com.agileboot.domain.lab.achievement.dto.LabAchievementDTO;
-import com.agileboot.domain.lab.achievement.dto.LabAchievementAuthorDTO;
+import com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity;
+import com.agileboot.domain.lab.paper.author.LabPaperAuthorService;
+import com.agileboot.domain.lab.paper.dto.LabPaperAuthorDTO;
+import com.agileboot.domain.lab.paper.dto.PublicPaperAuthorDTO;
+import com.agileboot.domain.lab.achievement.dto.LabFundAssociationDTO;
 import com.agileboot.domain.lab.achievement.query.LabAchievementQuery;
+import com.agileboot.domain.lab.fund.db.LabFundPaperRelEntity;
+import com.agileboot.domain.lab.fund.db.LabFundPaperRelService;
+import com.agileboot.domain.lab.paper.db.LabPaperEntity;
+import com.agileboot.domain.lab.paper.db.LabPaperService;
+import com.agileboot.domain.lab.project.author.LabProjectAuthorEntity;
+import com.agileboot.domain.lab.project.author.LabProjectAuthorService;
+import com.agileboot.domain.lab.project.db.LabProjectEntity;
+import com.agileboot.domain.lab.project.db.LabProjectService;
 import com.agileboot.domain.lab.user.db.LabUserEntity;
 import com.agileboot.domain.lab.user.db.LabUserService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -22,11 +34,16 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import com.agileboot.domain.lab.category.CategoryCompatibilityService;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -37,13 +54,29 @@ import java.util.stream.Collectors;
 public class LabAchievementApplicationService {
 
     private final LabAchievementService achievementService;
-    private static java.time.LocalDate parseYearToLocalDate(String yearStr) {
-        if (yearStr == null || yearStr.trim().isEmpty()) return null;
-        String y = yearStr.trim();
-        if (!y.matches("\\d{4}")) {
-            throw new ApiException(ErrorCode.Client.COMMON_REQUEST_PARAMETERS_INVALID, "发表年份格式应为yyyy");
+    private static final DateTimeFormatter PUBLISH_DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE;
+
+    private static LocalDate parseYearToLocalDate(String raw) {
+        if (!StringUtils.hasText(raw)) {
+            return null;
         }
-        return java.time.LocalDate.of(Integer.parseInt(y), 1, 1);
+        String value = raw.trim();
+        try {
+            if (value.matches("\\d{4}-\\d{2}-\\d{2}")) {
+                return LocalDate.parse(value, PUBLISH_DATE_FORMATTER);
+            }
+            if (value.matches("\\d{4}-\\d{2}")) {
+                return LocalDate.parse(value + "-01", PUBLISH_DATE_FORMATTER);
+            }
+            if (value.matches("\\d{4}")) {
+                return LocalDate.of(Integer.parseInt(value), 1, 1);
+            }
+        } catch (DateTimeParseException ex) {
+            throw new ApiException(ErrorCode.Client.COMMON_REQUEST_PARAMETERS_INVALID,
+                "发表日期格式应为yyyy-MM-dd");
+        }
+        throw new ApiException(ErrorCode.Client.COMMON_REQUEST_PARAMETERS_INVALID,
+            "发表日期格式应为yyyy-MM-dd");
     }
 
     private static java.time.LocalDate parseYearMonthToLocalDate(String ymStr) {
@@ -61,10 +94,25 @@ public class LabAchievementApplicationService {
         return java.time.LocalDate.of(year, month, 1);
     }
 
-    private final com.agileboot.domain.lab.achievement.db.LabAchievementAuthorService authorService;
+    private final LabPaperAuthorService authorService;
+    private final LabProjectAuthorService projectAuthorService;
     private final LabUserService labUserService;
     private final CategoryCompatibilityService categoryCompatibilityService;
     private final com.agileboot.domain.lab.category.db.LabAchievementCategoryService categoryService;
+    private final LabPaperService paperService;
+    private final LabProjectService projectService;
+    private final LabFundPaperRelService fundPaperRelService;
+    private java.util.List<Long> getProjectCategoryIds() {
+        com.agileboot.domain.lab.category.db.LabAchievementCategoryEntity projectTop =
+            categoryService.getByCategoryCode("PROJECT");
+        if (projectTop == null) {
+            return java.util.Collections.emptyList();
+        }
+        java.util.List<Long> ids = categoryService.getDescendantIdsIncludeInactive(projectTop.getId());
+        java.util.List<Long> result = ids == null ? new java.util.ArrayList<>() : new java.util.ArrayList<>(ids);
+        result.add(projectTop.getId());
+        return result;
+    }
 
     /**
      * 分页查询成果列表
@@ -84,6 +132,13 @@ public class LabAchievementApplicationService {
         // 类型/分类过滤：当传入 categoryId 或 parentCategoryId 时，忽略 type 兼容参数
         if (query.getType() != null && query.getCategoryId() == null && query.getParentCategoryId() == null) {
             wrapper.eq(LabAchievementEntity::getType, query.getType());
+        }
+        if (Boolean.TRUE.equals(query.getExcludeProject())) {
+            wrapper.ne(LabAchievementEntity::getType, 2);
+            java.util.List<Long> projectCategoryIds = getProjectCategoryIds();
+            if (!projectCategoryIds.isEmpty()) {
+                wrapper.notIn(LabAchievementEntity::getCategoryId, projectCategoryIds);
+            }
         }
         wrapper.eq(query.getPaperType() != null, LabAchievementEntity::getPaperType, query.getPaperType());
         wrapper.eq(query.getProjectType() != null, LabAchievementEntity::getProjectType, query.getProjectType());
@@ -105,15 +160,24 @@ public class LabAchievementApplicationService {
 
         // 按作者用户ID过滤（仅统计内部作者：user_id=authorUserId 且 deleted=false）
         if (query.getAuthorUserId() != null) {
-            List<Long> byAuthorIds = authorService.lambdaQuery()
-                .eq(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getUserId, query.getAuthorUserId())
-                .eq(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getDeleted, false)
+            java.util.List<Long> byAuthorIds = new java.util.ArrayList<>();
+            byAuthorIds.addAll(authorService.lambdaQuery()
+                .eq(com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity::getUserId, query.getAuthorUserId())
+                .eq(com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity::getDeleted, false)
                 .list()
                 .stream()
-                .map(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getAchievementId)
-                .collect(Collectors.toList());
+                .map(com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity::getPaperId)
+                .collect(Collectors.toList()));
+            byAuthorIds.addAll(projectAuthorService.lambdaQuery()
+                .eq(LabProjectAuthorEntity::getUserId, query.getAuthorUserId())
+                .eq(LabProjectAuthorEntity::getDeleted, false)
+                .list()
+                .stream()
+                .map(LabProjectAuthorEntity::getProjectId)
+                .collect(Collectors.toList()));
+            byAuthorIds = byAuthorIds.stream().distinct().collect(Collectors.toList());
             if (byAuthorIds.isEmpty()) {
-                return new PageDTO<LabAchievementDTO>(java.util.Collections.emptyList(), 0L);
+                return new PageDTO<>(java.util.Collections.emptyList(), 0L);
             }
             wrapper.in(LabAchievementEntity::getId, byAuthorIds);
         }
@@ -145,15 +209,99 @@ public class LabAchievementApplicationService {
 
         // 批量填充作者（管理端列表需要完整作者）
         if (!records.isEmpty()) {
-            List<Long> ids = records.stream().map(LabAchievementEntity::getId).collect(Collectors.toList());
-            List<com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity> authors = authorService.getAuthorsByAchievementIds(ids);
-            java.util.Map<Long, List<LabAchievementAuthorDTO>> map = new java.util.HashMap<>();
-            for (com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity a : authors) {
-                map.computeIfAbsent(a.getAchievementId(), k -> new java.util.ArrayList<>())
-                   .add(LabAchievementAuthorDTO.fromEntity(a));
+            List<Long> paperIds = records.stream()
+                .filter(e -> Integer.valueOf(1).equals(e.getType()))
+                .map(LabAchievementEntity::getId)
+                .collect(Collectors.toList());
+            List<Long> projectIds = records.stream()
+                .filter(e -> Integer.valueOf(2).equals(e.getType()))
+                .map(LabAchievementEntity::getId)
+                .collect(Collectors.toList());
+
+            java.util.Map<Long, List<LabPaperAuthorDTO>> map = new java.util.HashMap<>();
+            if (!paperIds.isEmpty()) {
+                List<com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity> authors = authorService.getAuthorsByPaperIds(paperIds);
+                for (com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity a : authors) {
+                    map.computeIfAbsent(a.getPaperId(), k -> new java.util.ArrayList<>())
+                       .add(LabPaperAuthorDTO.fromEntity(a));
+                }
+            }
+            if (!projectIds.isEmpty()) {
+                List<LabProjectAuthorEntity> projectAuthors = projectAuthorService.getAuthorsByProjectIds(projectIds);
+                java.util.Set<Long> projectIdsWithAuthors = new java.util.HashSet<>();
+                for (LabProjectAuthorEntity author : projectAuthors) {
+                    map.computeIfAbsent(author.getProjectId(), k -> new java.util.ArrayList<>())
+                       .add(convertProjectAuthor(author));
+                    projectIdsWithAuthors.add(author.getProjectId());
+                }
+                List<Long> legacyNeeded = projectIds.stream()
+                    .filter(id -> !projectIdsWithAuthors.contains(id) || !map.containsKey(id))
+                    .collect(Collectors.toList());
+                if (!legacyNeeded.isEmpty()) {
+                    List<com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity> legacyAuthors = queryLegacyProjectAuthors(legacyNeeded);
+                    for (com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity legacy : legacyAuthors) {
+                        map.computeIfAbsent(legacy.getPaperId(), k -> new java.util.ArrayList<>())
+                           .add(LabPaperAuthorDTO.fromEntity(legacy));
+                    }
+                }
             }
             for (LabAchievementDTO dto : dtoList) {
                 dto.setAuthors(map.getOrDefault(dto.getId(), java.util.Collections.emptyList()));
+            }
+
+            java.util.Map<Long, LabPaperEntity> paperMap = new java.util.HashMap<>();
+            if (!paperIds.isEmpty()) {
+                paperService.listByIds(paperIds).forEach(paper -> {
+                    if (paper != null && paper.getId() != null) {
+                        paperMap.put(paper.getId(), paper);
+                    }
+                });
+            }
+
+            java.util.Map<Long, LabProjectEntity> projectMap = new java.util.HashMap<>();
+            if (!projectIds.isEmpty()) {
+                projectService.listByIds(projectIds).forEach(project -> {
+                    if (project != null && project.getId() != null) {
+                        projectMap.put(project.getId(), project);
+                    }
+                });
+            }
+
+            for (LabAchievementDTO dto : dtoList) {
+                mergeChildSnapshotIntoDto(dto, paperMap.get(dto.getId()), projectMap.get(dto.getId()));
+            }
+
+            if (!paperIds.isEmpty()) {
+                java.util.Map<Long, List<LabFundPaperRelEntity>> fundEntityMap = fundPaperRelService.lambdaQuery()
+                    .in(LabFundPaperRelEntity::getPaperId, paperIds)
+                    .list()
+                    .stream()
+                    .collect(Collectors.groupingBy(
+                        LabFundPaperRelEntity::getPaperId
+                    ));
+                for (LabAchievementDTO dto : dtoList) {
+                    if (Integer.valueOf(1).equals(dto.getType())) {
+                        List<LabFundPaperRelEntity> rels = fundEntityMap.get(dto.getId());
+                        if (rels == null) {
+                            dto.setFundIds(java.util.Collections.emptyList());
+                            dto.setFundAssociations(java.util.Collections.emptyList());
+                        } else {
+                            List<Long> fundIds = rels.stream()
+                                .map(LabFundPaperRelEntity::getFundId)
+                                .collect(Collectors.toList());
+                            List<LabFundAssociationDTO> fundDtos = rels.stream()
+                                .map(rel -> {
+                                    LabFundAssociationDTO item = new LabFundAssociationDTO();
+                                    item.setFundId(rel.getFundId());
+                                    item.setAmount(rel.getAmount());
+                                    return item;
+                                })
+                                .collect(Collectors.toList());
+                            dto.setFundIds(fundIds);
+                            dto.setFundAssociations(fundDtos);
+                        }
+                    }
+                }
             }
         }
 
@@ -203,6 +351,14 @@ public class LabAchievementApplicationService {
         }
 
         LabAchievementDTO dto = LabAchievementDTO.fromEntity(entity);
+        LabPaperEntity paper = null;
+        LabProjectEntity project = null;
+        if (Integer.valueOf(1).equals(entity.getType())) {
+            paper = paperService.getById(entity.getId());
+        } else if (Integer.valueOf(2).equals(entity.getType())) {
+            project = projectService.getById(entity.getId());
+        }
+        mergeChildSnapshotIntoDto(dto, paper, project);
 
         // 设置所有者姓名
         if (entity.getOwnerUserId() != null) {
@@ -213,13 +369,100 @@ public class LabAchievementApplicationService {
         }
 
         // 填充作者（管理端：全部作者，不过滤）
-        List<com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity> authors =
-            authorService.getAuthorsByAchievementId(entity.getId());
-        dto.setAuthors(authors.stream()
-            .map(com.agileboot.domain.lab.achievement.dto.LabAchievementAuthorDTO::fromEntity)
-            .collect(java.util.stream.Collectors.toList()));
+        if (Integer.valueOf(1).equals(entity.getType())) {
+            List<com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity> authors =
+                authorService.getAuthorsByPaperId(entity.getId());
+            dto.setAuthors(authors.stream()
+                .map(com.agileboot.domain.lab.paper.dto.LabPaperAuthorDTO::fromEntity)
+                .collect(java.util.stream.Collectors.toList()));
+        } else if (Integer.valueOf(2).equals(entity.getType())) {
+            List<LabProjectAuthorEntity> authors = projectAuthorService.getAuthorsByProjectId(entity.getId());
+            List<LabPaperAuthorDTO> projectAuthorDtos = authors.stream()
+                .map(this::convertProjectAuthor)
+                .collect(java.util.stream.Collectors.toList());
+            if (projectAuthorDtos.isEmpty()) {
+                List<com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity> legacy =
+                    queryLegacyProjectAuthors(java.util.Collections.singletonList(entity.getId()));
+                projectAuthorDtos = legacy.stream()
+                    .map(com.agileboot.domain.lab.paper.dto.LabPaperAuthorDTO::fromEntity)
+                    .collect(java.util.stream.Collectors.toList());
+            }
+            dto.setAuthors(projectAuthorDtos);
+        } else {
+            dto.setAuthors(java.util.Collections.emptyList());
+        }
+
+        if (Integer.valueOf(1).equals(entity.getType())) {
+            List<LabFundPaperRelEntity> rels = fundPaperRelService.lambdaQuery()
+                .eq(LabFundPaperRelEntity::getPaperId, entity.getId())
+                .list();
+            if (rels != null && !rels.isEmpty()) {
+                dto.setFundIds(rels.stream()
+                    .map(LabFundPaperRelEntity::getFundId)
+                    .collect(Collectors.toList()));
+                dto.setFundAssociations(rels.stream()
+                    .map(rel -> {
+                        LabFundAssociationDTO item = new LabFundAssociationDTO();
+                        item.setFundId(rel.getFundId());
+                        item.setAmount(rel.getAmount());
+                        return item;
+                    })
+                    .collect(Collectors.toList()));
+            } else {
+                dto.setFundIds(java.util.Collections.emptyList());
+                dto.setFundAssociations(java.util.Collections.emptyList());
+            }
+        }
 
         return dto;
+    }
+
+    public List<LabFundAssociationDTO> getAchievementFundAssociations(Long achievementId) {
+        LabAchievementEntity entity = achievementService.getByIdNotDeleted(achievementId);
+        if (entity == null) {
+            throw new ApiException(ErrorCode.Business.COMMON_OBJECT_NOT_FOUND, "", "成果");
+        }
+        if (!Integer.valueOf(1).equals(entity.getType())) {
+            throw new ApiException(ErrorCode.Business.COMMON_UNSUPPORTED_OPERATION, "仅论文类成果支持基金关联操作");
+        }
+        return fundPaperRelService.lambdaQuery()
+            .eq(LabFundPaperRelEntity::getPaperId, achievementId)
+            .list()
+            .stream()
+            .map(rel -> {
+                LabFundAssociationDTO dto = new LabFundAssociationDTO();
+                dto.setFundId(rel.getFundId());
+                dto.setAmount(rel.getAmount());
+                return dto;
+            })
+            .collect(Collectors.toList());
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void updateAchievementFundAssociations(Long achievementId,
+                                                  List<FundAssociationCommand> associations,
+                                                  Long currentUserId,
+                                                  boolean isAdmin) {
+        LabAchievementEntity entity = achievementService.getByIdNotDeleted(achievementId);
+        if (entity == null) {
+            throw new ApiException(ErrorCode.Business.COMMON_OBJECT_NOT_FOUND, "", "成果");
+        }
+        if (!Integer.valueOf(1).equals(entity.getType())) {
+            throw new ApiException(ErrorCode.Business.COMMON_UNSUPPORTED_OPERATION, "仅论文类成果支持基金关联操作");
+        }
+        if (!isAdmin && !achievementService.canEdit(achievementId, currentUserId, false)) {
+            throw new ApiException(ErrorCode.Business.PERMISSION_NOT_ALLOWED_TO_OPERATE);
+        }
+        java.util.Date now = new java.util.Date();
+        updateFundRelations(achievementId, associations == null ? java.util.Collections.emptyList() : associations);
+        paperService.lambdaUpdate()
+            .eq(LabPaperEntity::getId, achievementId)
+            .set(LabPaperEntity::getUpdateTime, now)
+            .update();
+        achievementService.lambdaUpdate()
+            .eq(LabAchievementEntity::getId, achievementId)
+            .set(LabAchievementEntity::getUpdateTime, now)
+            .update();
     }
 
     /**
@@ -262,6 +505,8 @@ public class LabAchievementApplicationService {
         entity.setUpdateTime(new java.util.Date());
 
         achievementService.save(entity);
+        syncSplitTables(entity, command);
+        syncFundRelations(entity, command);
 
         // 批量创建作者（如果提供）
         if (command.getAuthors() != null && !command.getAuthors().isEmpty()) {
@@ -595,27 +840,15 @@ public class LabAchievementApplicationService {
             .set("extra", entity.getExtra())
             .set("update_time", entity.getUpdateTime());
 
+        syncSplitTables(entity, command);
         achievementService.update(updateWrapper);
+        syncFundRelations(entity, command);
 
         // 若提交了作者列表，则替换（全量覆盖）：先软删旧作者，再按新列表创建
         if (command.getAuthors() != null) {
             System.out.println("DEBUG: 开始处理作者列表，成果ID=" + id + "，作者数量=" + command.getAuthors().size());
-
-            // 先清理历史上已被软删的作者（物理删除），避免唯一索引(achievement_id, author_order, deleted)冲突
-            int hardDeletedCount = authorService.hardDeleteDeletedByAchievementId(id);
-            System.out.println("DEBUG: 物理删除了 " + hardDeletedCount + " 条历史软删作者");
-
-            // 再将当前未删除的作者标记为删除（精准条件）
-            com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper<com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity> uw =
-                new com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper<>();
-            uw.eq(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getAchievementId, id)
-              .eq(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getDeleted, false)
-              .set(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getDeleted, true);
-            boolean ok = authorService.update(uw);
-            System.out.println("DEBUG: 软删除当前作者结果=" + ok);
-
-            // 插入新作者
-            System.out.println("DEBUG: 开始插入新作者列表");
+            int removed = authorService.hardDeleteAllByPaperId(id);
+            System.out.println("DEBUG: 已物理删除原作者记录数量=" + removed);
             createAuthorsForAchievement(id, command.getAuthors(), true);
             System.out.println("DEBUG: 作者列表处理完成");
         } else {
@@ -654,9 +887,21 @@ public class LabAchievementApplicationService {
             throw new ApiException(ErrorCode.Business.COMMON_UNSUPPORTED_OPERATION, "成果删除失败");
         }
 
+        // 同步拆分表的删除状态
+        paperService.lambdaUpdate()
+            .eq(LabPaperEntity::getId, id)
+            .set(LabPaperEntity::getDeleted, true)
+            .set(LabPaperEntity::getUpdateTime, new java.util.Date())
+            .update();
+        projectService.lambdaUpdate()
+            .eq(LabProjectEntity::getId, id)
+            .set(LabProjectEntity::getDeleted, true)
+            .set(LabProjectEntity::getUpdateTime, new java.util.Date())
+            .update();
+
         // 成果删除成功后，级联删除所有相关的作者关联记录
         // 因为成果已经不存在，这些关联记录就没有意义了，应该彻底清理
-        authorService.hardDeleteAllByAchievementId(id);
+        authorService.hardDeleteAllByPaperId(id);
     }
 
     /**
@@ -683,7 +928,7 @@ public class LabAchievementApplicationService {
             if (u != null && com.agileboot.domain.lab.user.db.LabUserEntity.Identity.TEACHER.getCode().equals(u.getIdentity())) {
                 isTeacher = true;
             }
-            boolean isParticipant = authorService.isAuthor(id, currentUserId);
+            boolean isParticipant = isAchievementAuthor(id, currentUserId);
             boolean isOwner = achievementService.isOwner(id, currentUserId);
             if (!(isAdmin || (isTeacher && (isOwner || isParticipant)))) {
                 throw new ApiException(ErrorCode.Business.PERMISSION_NOT_ALLOWED_TO_OPERATE);
@@ -693,6 +938,7 @@ public class LabAchievementApplicationService {
         entity.setPublished(published);
         entity.setUpdateTime(new java.util.Date());
         achievementService.updateById(entity);
+        syncPublishState(entity);
     }
 
     /**
@@ -714,6 +960,314 @@ public class LabAchievementApplicationService {
         entity.setIsVerified(verified);
         entity.setUpdateTime(new java.util.Date());
         achievementService.updateById(entity);
+        syncVerifyState(entity);
+    }
+
+    private void syncPublishState(LabAchievementEntity entity) {
+        paperService.lambdaUpdate()
+            .eq(LabPaperEntity::getId, entity.getId())
+            .set(LabPaperEntity::getPublished, entity.getPublished())
+            .set(LabPaperEntity::getUpdateTime, entity.getUpdateTime())
+            .update();
+        projectService.lambdaUpdate()
+            .eq(LabProjectEntity::getId, entity.getId())
+            .set(LabProjectEntity::getPublished, entity.getPublished())
+            .set(LabProjectEntity::getUpdateTime, entity.getUpdateTime())
+            .update();
+    }
+
+    private void syncVerifyState(LabAchievementEntity entity) {
+        paperService.lambdaUpdate()
+            .eq(LabPaperEntity::getId, entity.getId())
+            .set(LabPaperEntity::getIsVerified, entity.getIsVerified())
+            .set(LabPaperEntity::getUpdateTime, entity.getUpdateTime())
+            .update();
+        projectService.lambdaUpdate()
+            .eq(LabProjectEntity::getId, entity.getId())
+            .set(LabProjectEntity::getIsVerified, entity.getIsVerified())
+            .set(LabProjectEntity::getUpdateTime, entity.getUpdateTime())
+            .update();
+    }
+
+    private void mergeChildSnapshotIntoDto(LabAchievementDTO dto, LabPaperEntity paper, LabProjectEntity project) {
+        if (dto == null) {
+            return;
+        }
+        if (paper != null) {
+            dto.setTitle(paper.getTitle());
+            dto.setTitleEn(paper.getTitleEn());
+            dto.setDescription(paper.getDescription());
+            dto.setKeywords(paper.getKeywords());
+            dto.setPaperType(paper.getPaperTypeId());
+            dto.setVenue(paper.getPublication());
+            dto.setPublishDate(paper.getPublishDate());
+            dto.setReference(paper.getReference());
+            dto.setDoi(paper.getDoi());
+            dto.setLinkUrl(paper.getLinkUrl());
+            dto.setGitUrl(paper.getGitUrl());
+            dto.setHomepageUrl(paper.getHomepageUrl());
+            dto.setPdfUrl(paper.getPdfUrl());
+            dto.setOwnerUserId(paper.getOwnerUserId());
+            dto.setPublished(paper.getPublished());
+            dto.setIsVerified(paper.getIsVerified());
+            dto.setExtra(paper.getExtra());
+            dto.setCreateTime(paper.getCreateTime());
+            dto.setUpdateTime(paper.getUpdateTime());
+        } else if (project != null) {
+            dto.setTitle(project.getTitle());
+            dto.setTitleEn(project.getTitleEn());
+            dto.setDescription(project.getDescription());
+            dto.setKeywords(project.getKeywords());
+            dto.setProjectType(project.getProjectTypeId());
+            dto.setProjectStartDate(project.getProjectStartDate());
+            dto.setProjectEndDate(project.getProjectEndDate());
+            dto.setFundingAmount(project.getFundingAmount());
+            dto.setReference(project.getReference());
+            dto.setLinkUrl(project.getLinkUrl());
+            dto.setGitUrl(project.getGitUrl());
+            dto.setHomepageUrl(project.getHomepageUrl());
+            dto.setPdfUrl(project.getPdfUrl());
+            dto.setOwnerUserId(project.getOwnerUserId());
+            dto.setPublished(project.getPublished());
+            dto.setIsVerified(project.getIsVerified());
+            dto.setExtra(project.getExtra());
+            dto.setCreateTime(project.getCreateTime());
+            dto.setUpdateTime(project.getUpdateTime());
+        }
+    }
+
+    private void mergeChildSnapshotIntoPublicDto(com.agileboot.domain.lab.achievement.dto.PublicAchievementDTO dto,
+                                                 LabPaperEntity paper,
+                                                 LabProjectEntity project) {
+        if (dto == null) {
+            return;
+        }
+        if (paper != null) {
+            dto.setTitle(paper.getTitle());
+            dto.setTitleEn(paper.getTitleEn());
+            dto.setDescription(paper.getDescription());
+            dto.setKeywords(paper.getKeywords());
+            dto.setPaperType(paper.getPaperTypeId());
+            dto.setVenue(paper.getPublication());
+            dto.setPublishDate(paper.getPublishDate());
+            dto.setReference(paper.getReference());
+            dto.setDoi(paper.getDoi());
+            dto.setLinkUrl(paper.getLinkUrl());
+            dto.setGitUrl(paper.getGitUrl());
+            dto.setHomepageUrl(paper.getHomepageUrl());
+            dto.setPdfUrl(paper.getPdfUrl());
+            dto.setPublished(paper.getPublished());
+            dto.setExtra(paper.getExtra());
+            dto.setCreateTime(paper.getCreateTime());
+        } else if (project != null) {
+            dto.setTitle(project.getTitle());
+            dto.setTitleEn(project.getTitleEn());
+            dto.setDescription(project.getDescription());
+            dto.setKeywords(project.getKeywords());
+            dto.setProjectType(project.getProjectTypeId());
+            dto.setProjectStartDate(project.getProjectStartDate());
+            dto.setProjectEndDate(project.getProjectEndDate());
+            dto.setFundingAmount(project.getFundingAmount());
+            dto.setReference(project.getReference());
+            dto.setLinkUrl(project.getLinkUrl());
+            dto.setGitUrl(project.getGitUrl());
+            dto.setHomepageUrl(project.getHomepageUrl());
+            dto.setPdfUrl(project.getPdfUrl());
+            dto.setPublished(project.getPublished());
+            dto.setExtra(project.getExtra());
+            dto.setCreateTime(project.getCreateTime());
+        }
+    }
+
+    private void syncSplitTables(LabAchievementEntity entity, CreateLabAchievementCommand command) {
+        Integer resolvedType = resolveType(command, entity);
+        if (Integer.valueOf(1).equals(resolvedType)) {
+            upsertPaper(entity, command);
+            projectService.removeById(entity.getId());
+        } else if (Integer.valueOf(2).equals(resolvedType)) {
+            upsertProject(entity, command);
+            paperService.removeById(entity.getId());
+        } else {
+            paperService.removeById(entity.getId());
+            projectService.removeById(entity.getId());
+        }
+    }
+
+    private void syncFundRelations(LabAchievementEntity entity, CreateLabAchievementCommand command) {
+        Integer resolvedType = resolveType(command, entity);
+        if (!Integer.valueOf(1).equals(resolvedType)) {
+            fundPaperRelService.lambdaUpdate()
+                .eq(LabFundPaperRelEntity::getPaperId, entity.getId())
+                .remove();
+            return;
+        }
+
+        List<FundAssociationCommand> funds = resolveFundAssociations(command);
+        updateFundRelations(entity.getId(), funds);
+    }
+
+    private List<FundAssociationCommand> resolveFundAssociations(CreateLabAchievementCommand command) {
+        if (command == null) {
+            return java.util.Collections.emptyList();
+        }
+        if (command.getFundAssociations() != null && !command.getFundAssociations().isEmpty()) {
+            return command.getFundAssociations().stream()
+                .filter(Objects::nonNull)
+                .filter(item -> item.getFundId() != null)
+                .collect(Collectors.toList());
+        }
+        if (command.getFundIds() != null && !command.getFundIds().isEmpty()) {
+            return command.getFundIds().stream()
+                .filter(Objects::nonNull)
+                .distinct()
+                .map(fundId -> {
+                    FundAssociationCommand cmd = new FundAssociationCommand();
+                    cmd.setFundId(fundId);
+                    cmd.setAmount(null);
+                    return cmd;
+                })
+                .collect(Collectors.toList());
+        }
+        return java.util.Collections.emptyList();
+    }
+
+    private void updateFundRelations(Long paperId, List<FundAssociationCommand> associations) {
+        fundPaperRelService.lambdaUpdate()
+            .eq(LabFundPaperRelEntity::getPaperId, paperId)
+            .remove();
+
+        if (associations == null || associations.isEmpty()) {
+            return;
+        }
+
+        java.util.LinkedHashMap<Long, java.math.BigDecimal> merged = new java.util.LinkedHashMap<>();
+        for (FundAssociationCommand association : associations) {
+            Long fundId = association.getFundId();
+            if (fundId == null) {
+                continue;
+            }
+            java.math.BigDecimal amount = association.getAmount();
+            merged.put(fundId, amount);
+        }
+
+        if (merged.isEmpty()) {
+            return;
+        }
+
+        java.util.Date now = new java.util.Date();
+        List<LabFundPaperRelEntity> relations = merged.entrySet().stream()
+            .map(entry -> {
+                LabFundPaperRelEntity rel = new LabFundPaperRelEntity();
+                rel.setFundId(entry.getKey());
+                rel.setPaperId(paperId);
+                rel.setAmount(entry.getValue());
+                rel.setCreateTime(now);
+                rel.setUpdateTime(now);
+                return rel;
+            })
+            .collect(Collectors.toList());
+        fundPaperRelService.saveBatch(relations);
+    }
+
+    private Integer resolveType(CreateLabAchievementCommand command, LabAchievementEntity entity) {
+        if (command != null && command.getResolvedType() != null) {
+            return command.getResolvedType();
+        }
+        return entity.getType();
+    }
+
+    private Integer resolveSubType(CreateLabAchievementCommand command, LabAchievementEntity entity) {
+        if (command != null && command.getResolvedSubType() != null) {
+            return command.getResolvedSubType();
+        }
+        if (entity.getType() != null) {
+            if (Integer.valueOf(1).equals(entity.getType())) {
+                return entity.getPaperType();
+            }
+            if (Integer.valueOf(2).equals(entity.getType())) {
+                return entity.getProjectType();
+            }
+        }
+        return null;
+    }
+
+    private void upsertPaper(LabAchievementEntity entity, CreateLabAchievementCommand command) {
+        LabPaperEntity existing = paperService.getById(entity.getId());
+        LabPaperEntity paper = existing != null ? existing : new LabPaperEntity();
+        paper.setId(entity.getId());
+        paper.setTitle(entity.getTitle());
+        paper.setTitleEn(entity.getTitleEn());
+        paper.setDescription(entity.getDescription());
+        paper.setKeywords(entity.getKeywords());
+        paper.setPaperTypeId(resolveSubType(command, entity));
+        paper.setPublication(entity.getVenue());
+        paper.setPublishDate(entity.getPublishDate());
+        paper.setPublishDateDisplay(entity.getPublishDate() != null ? entity.getPublishDate().toString() : null);
+        paper.setReference(entity.getReference());
+        paper.setDoi(entity.getDoi());
+        paper.setLinkUrl(entity.getLinkUrl());
+        paper.setExtraUrl(entity.getLinkUrl());
+        paper.setGitUrl(entity.getGitUrl());
+        paper.setHomepageUrl(entity.getHomepageUrl());
+        paper.setPdfUrl(entity.getPdfUrl());
+        paper.setNotes(entity.getDescription());
+        paper.setOwnerUserId(entity.getOwnerUserId());
+        paper.setPublished(entity.getPublished());
+        paper.setIsVerified(entity.getIsVerified());
+        paper.setExtra(entity.getExtra());
+        paper.setCreatorId(entity.getCreatorId());
+        paper.setUpdaterId(entity.getUpdaterId());
+        paper.setDeleted(Boolean.TRUE.equals(entity.getDeleted()));
+        paper.setUpdateTime(entity.getUpdateTime());
+        if (existing != null && existing.getCreateTime() != null) {
+            paper.setCreateTime(existing.getCreateTime());
+        } else {
+            paper.setCreateTime(entity.getCreateTime());
+        }
+
+        if (existing == null) {
+            paperService.save(paper);
+        } else {
+            paperService.updateById(paper);
+        }
+    }
+
+    private void upsertProject(LabAchievementEntity entity, CreateLabAchievementCommand command) {
+        LabProjectEntity existing = projectService.getById(entity.getId());
+        LabProjectEntity project = existing != null ? existing : new LabProjectEntity();
+        project.setId(entity.getId());
+        project.setTitle(entity.getTitle());
+        project.setTitleEn(entity.getTitleEn());
+        project.setDescription(entity.getDescription());
+        project.setKeywords(entity.getKeywords());
+        project.setProjectTypeId(resolveSubType(command, entity));
+        project.setProjectStartDate(entity.getProjectStartDate());
+        project.setProjectEndDate(entity.getProjectEndDate());
+        project.setFundingAmount(entity.getFundingAmount());
+        project.setReference(entity.getReference());
+        project.setLinkUrl(entity.getLinkUrl());
+        project.setGitUrl(entity.getGitUrl());
+        project.setHomepageUrl(entity.getHomepageUrl());
+        project.setPdfUrl(entity.getPdfUrl());
+        project.setOwnerUserId(entity.getOwnerUserId());
+        project.setPublished(entity.getPublished());
+        project.setIsVerified(entity.getIsVerified());
+        project.setExtra(entity.getExtra());
+        project.setCreatorId(entity.getCreatorId());
+        project.setUpdaterId(entity.getUpdaterId());
+        project.setDeleted(Boolean.TRUE.equals(entity.getDeleted()));
+        project.setUpdateTime(entity.getUpdateTime());
+        if (existing != null && existing.getCreateTime() != null) {
+            project.setCreateTime(existing.getCreateTime());
+        } else {
+            project.setCreateTime(entity.getCreateTime());
+        }
+
+        if (existing == null) {
+            projectService.save(project);
+        } else {
+            projectService.updateById(project);
+        }
     }
 
     /**
@@ -754,10 +1308,27 @@ public class LabAchievementApplicationService {
             derivedSubType = mapping.getSubType();
         }
 
-        // 设置旧字段默认值（兼容数据库NOT NULL约束）
-        command.setType(3);  // 3表示其他成果类型
-        command.setPaperType(null);
-        command.setProjectType(null);
+        // 缓存映射结果，供后续同步拆分表使用
+        command.setResolvedType(derivedType);
+        command.setResolvedSubType(derivedSubType);
+
+        // 设置 legacy 字段，保持与新分类的兼容
+        if (derivedType != null) {
+            command.setType(derivedType);
+            if (Integer.valueOf(1).equals(derivedType)) {
+                command.setPaperType(derivedSubType);
+                command.setProjectType(null);
+            } else if (Integer.valueOf(2).equals(derivedType)) {
+                command.setPaperType(null);
+                command.setProjectType(derivedSubType);
+            } else {
+                command.setPaperType(null);
+                command.setProjectType(null);
+            }
+        } else {
+            command.setPaperType(null);
+            command.setProjectType(null);
+        }
     }
 
     /**
@@ -787,12 +1358,23 @@ public class LabAchievementApplicationService {
      */
     public PageDTO<LabAchievementDTO> getMyAchievementList(com.agileboot.domain.lab.achievement.query.MyAchievementQuery query, Long currentUserId) {
         // 查询我参与的成果ID（作为作者，显示所有参与的成果，不管visible设置）
-        List<Long> authorAchievementIds = authorService.lambdaQuery()
-            .eq(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getUserId, currentUserId)
-            .eq(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getDeleted, false)
+        List<Long> authorAchievementIds = new java.util.ArrayList<>();
+        authorAchievementIds.addAll(authorService.lambdaQuery()
+            .eq(com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity::getUserId, currentUserId)
+            .eq(com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity::getDeleted, false)
             .list()
             .stream()
-            .map(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getAchievementId)
+            .map(com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity::getPaperId)
+            .collect(Collectors.toList()));
+        authorAchievementIds.addAll(projectAuthorService.lambdaQuery()
+            .eq(LabProjectAuthorEntity::getUserId, currentUserId)
+            .eq(LabProjectAuthorEntity::getDeleted, false)
+            .list()
+            .stream()
+            .map(LabProjectAuthorEntity::getProjectId)
+            .collect(Collectors.toList()));
+        final List<Long> mergedAuthorAchievementIds = authorAchievementIds.stream()
+            .distinct()
             .collect(Collectors.toList());
 
         // 合并条件：我拥有的 OR 我参与的
@@ -800,8 +1382,8 @@ public class LabAchievementApplicationService {
         wrapper.eq(LabAchievementEntity::getDeleted, false)
                .and(w -> {
                    w.eq(LabAchievementEntity::getOwnerUserId, currentUserId);
-                   if (!authorAchievementIds.isEmpty()) {
-                       w.or().in(LabAchievementEntity::getId, authorAchievementIds);
+                   if (!mergedAuthorAchievementIds.isEmpty()) {
+                       w.or().in(LabAchievementEntity::getId, mergedAuthorAchievementIds);
                    }
                });
 
@@ -813,6 +1395,13 @@ public class LabAchievementApplicationService {
         // 当传入 categoryId 或 parentCategoryId 时，忽略 type 兼容参数
         if (query.getType() != null && query.getCategoryId() == null && query.getParentCategoryId() == null) {
             wrapper.eq(LabAchievementEntity::getType, query.getType());
+        }
+        if (Boolean.TRUE.equals(query.getExcludeProject())) {
+            wrapper.ne(LabAchievementEntity::getType, 2);
+            java.util.List<Long> projectCategoryIds = getProjectCategoryIds();
+            if (!projectCategoryIds.isEmpty()) {
+                wrapper.notIn(LabAchievementEntity::getCategoryId, projectCategoryIds);
+            }
         }
 
         //         
@@ -849,12 +1438,18 @@ public class LabAchievementApplicationService {
         if (StringUtils.hasText(query.getAuthorName())) {
             java.util.Set<Long> byAuthor = new java.util.HashSet<>();
             // 作者表 name/name_en 模糊
-            java.util.List<com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity> nameMatched = authorService.lambdaQuery()
-                .eq(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getDeleted, false)
-                .and(w -> w.like(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getName, query.getAuthorName())
-                         .or().like(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getNameEn, query.getAuthorName()))
+            java.util.List<com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity> nameMatched = authorService.lambdaQuery()
+                .eq(com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity::getDeleted, false)
+                .and(w -> w.like(com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity::getName, query.getAuthorName())
+                         .or().like(com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity::getNameEn, query.getAuthorName()))
                 .list();
-            nameMatched.forEach(a -> byAuthor.add(a.getAchievementId()));
+            nameMatched.forEach(a -> byAuthor.add(a.getPaperId()));
+            java.util.List<LabProjectAuthorEntity> projectNameMatched = projectAuthorService.lambdaQuery()
+                .eq(LabProjectAuthorEntity::getDeleted, false)
+                .and(w -> w.like(LabProjectAuthorEntity::getName, query.getAuthorName())
+                    .or().like(LabProjectAuthorEntity::getNameEn, query.getAuthorName()))
+                .list();
+            projectNameMatched.forEach(a -> byAuthor.add(a.getProjectId()));
             // 内部作者按 lab_user 姓名模糊 -> 反查成就ID
             java.util.List<Long> userIds = labUserService.lambdaQuery()
                 .eq(com.agileboot.domain.lab.user.db.LabUserEntity::getDeleted, false)
@@ -864,11 +1459,17 @@ public class LabAchievementApplicationService {
                 .collect(java.util.stream.Collectors.toList());
             if (!userIds.isEmpty()) {
                 java.util.List<Long> byUser = authorService.lambdaQuery()
-                    .eq(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getDeleted, false)
-                    .in(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getUserId, userIds)
-                    .list().stream().map(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getAchievementId)
+                    .eq(com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity::getDeleted, false)
+                    .in(com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity::getUserId, userIds)
+                    .list().stream().map(com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity::getPaperId)
                     .collect(java.util.stream.Collectors.toList());
                 byAuthor.addAll(byUser);
+                java.util.List<Long> projectByUser = projectAuthorService.lambdaQuery()
+                    .eq(LabProjectAuthorEntity::getDeleted, false)
+                    .in(LabProjectAuthorEntity::getUserId, userIds)
+                    .list().stream().map(LabProjectAuthorEntity::getProjectId)
+                    .collect(java.util.stream.Collectors.toList());
+                byAuthor.addAll(projectByUser);
             }
             if (byAuthor.isEmpty()) {
                 return new PageDTO<>(java.util.Collections.emptyList(), 0L);
@@ -899,25 +1500,73 @@ public class LabAchievementApplicationService {
 
         // 填充作者（我的成果：显示全部作者，不过滤 visible）
         if (result.getTotal() > 0) {
-            java.util.List<Long> ids = result.getRecords().stream().map(LabAchievementEntity::getId).collect(java.util.stream.Collectors.toList());
-            java.util.List<com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity> authors = authorService.getAuthorsByAchievementIds(ids);
-            java.util.Map<Long, java.util.List<LabAchievementAuthorDTO>> map = new java.util.HashMap<>();
+            java.util.List<Long> paperIds = result.getRecords().stream()
+                .filter(e -> Integer.valueOf(1).equals(e.getType()))
+                .map(LabAchievementEntity::getId)
+                .collect(Collectors.toList());
+            java.util.List<Long> projectIds = result.getRecords().stream()
+                .filter(e -> Integer.valueOf(2).equals(e.getType()))
+                .map(LabAchievementEntity::getId)
+                .collect(Collectors.toList());
+
+            java.util.Map<Long, java.util.List<LabPaperAuthorDTO>> map = new java.util.HashMap<>();
             java.util.Map<Long, Boolean> myVisibilityMap = new java.util.HashMap<>();
 
-            for (com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity a : authors) {
-                map.computeIfAbsent(a.getAchievementId(), k -> new java.util.ArrayList<>())
-                   .add(LabAchievementAuthorDTO.fromEntity(a));
-
-                // 记录当前用户在每个成果中的可见性状态
-                if (currentUserId.equals(a.getUserId())) {
-                    myVisibilityMap.put(a.getAchievementId(), a.getVisible());
+            if (!paperIds.isEmpty()) {
+                java.util.List<com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity> authors = authorService.getAuthorsByPaperIds(paperIds);
+                for (com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity a : authors) {
+                    map.computeIfAbsent(a.getPaperId(), k -> new java.util.ArrayList<>())
+                       .add(LabPaperAuthorDTO.fromEntity(a));
+                    if (currentUserId.equals(a.getUserId())) {
+                        myVisibilityMap.put(a.getPaperId(), a.getVisible());
+                    }
+                }
+            }
+            if (!projectIds.isEmpty()) {
+                java.util.List<LabProjectAuthorEntity> authors = projectAuthorService.getAuthorsByProjectIds(projectIds);
+                java.util.Set<Long> projectIdsWithAuthors = new java.util.HashSet<>();
+                for (LabProjectAuthorEntity a : authors) {
+                    map.computeIfAbsent(a.getProjectId(), k -> new java.util.ArrayList<>())
+                       .add(convertProjectAuthor(a));
+                    if (currentUserId.equals(a.getUserId())) {
+                        myVisibilityMap.put(a.getProjectId(), a.getVisible());
+                    }
+                    projectIdsWithAuthors.add(a.getProjectId());
+                }
+                List<Long> legacyNeeded = projectIds.stream()
+                    .filter(id -> !projectIdsWithAuthors.contains(id) || !map.containsKey(id))
+                    .collect(Collectors.toList());
+                if (!legacyNeeded.isEmpty()) {
+                    List<com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity> legacy = queryLegacyProjectAuthors(legacyNeeded);
+                    for (com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity legacyAuthor : legacy) {
+                        map.computeIfAbsent(legacyAuthor.getPaperId(), k -> new java.util.ArrayList<>())
+                           .add(LabPaperAuthorDTO.fromEntity(legacyAuthor));
+                        if (currentUserId.equals(legacyAuthor.getUserId())) {
+                            myVisibilityMap.put(legacyAuthor.getPaperId(), legacyAuthor.getVisible());
+                        }
+                    }
                 }
             }
 
             for (LabAchievementDTO dto : dtoList) {
                 dto.setAuthors(map.getOrDefault(dto.getId(), java.util.Collections.emptyList()));
-                // 设置当前用户在该成果中的可见性状态
                 dto.setMyVisibility(myVisibilityMap.get(dto.getId()));
+            }
+
+            if (!paperIds.isEmpty()) {
+                java.util.Map<Long, java.util.List<Long>> fundMap = fundPaperRelService.lambdaQuery()
+                    .in(LabFundPaperRelEntity::getPaperId, paperIds)
+                    .list()
+                    .stream()
+                    .collect(Collectors.groupingBy(
+                        LabFundPaperRelEntity::getPaperId,
+                        Collectors.mapping(LabFundPaperRelEntity::getFundId, Collectors.toList())
+                    ));
+                for (LabAchievementDTO dto : dtoList) {
+                    if (Integer.valueOf(1).equals(dto.getType())) {
+                        dto.setFundIds(fundMap.getOrDefault(dto.getId(), java.util.Collections.emptyList()));
+                    }
+                }
             }
         }
 
@@ -938,23 +1587,32 @@ public class LabAchievementApplicationService {
             throw new ApiException(ErrorCode.Business.COMMON_OBJECT_NOT_FOUND, "", "成果");
         }
 
-        // 查找我在该成果中的作者记录
-        com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity authorRecord =
-            authorService.getAuthorRecord(achievementId, currentUserId);
-        if (authorRecord == null) {
-            throw new ApiException(ErrorCode.Business.COMMON_OBJECT_NOT_FOUND, "", "您不是该成果的作者");
+        if (Integer.valueOf(1).equals(achievement.getType())) {
+            com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity authorRecord =
+                authorService.getAuthorRecord(achievementId, currentUserId);
+            if (authorRecord == null) {
+                throw new ApiException(ErrorCode.Business.COMMON_OBJECT_NOT_FOUND, "", "您不是该成果的作者");
+            }
+            authorRecord.setVisible(Boolean.TRUE.equals(visible));
+            authorRecord.setUpdateTime(new java.util.Date());
+            authorService.updateById(authorRecord);
+            return authorRecord.getVisible();
+        } else if (Integer.valueOf(2).equals(achievement.getType())) {
+            LabProjectAuthorEntity authorRecord = projectAuthorService.lambdaQuery()
+                .eq(LabProjectAuthorEntity::getProjectId, achievementId)
+                .eq(LabProjectAuthorEntity::getUserId, currentUserId)
+                .eq(LabProjectAuthorEntity::getDeleted, false)
+                .one();
+            if (authorRecord == null) {
+                throw new ApiException(ErrorCode.Business.COMMON_OBJECT_NOT_FOUND, "", "您不是该成果的作者");
+            }
+            authorRecord.setVisible(Boolean.TRUE.equals(visible));
+            authorRecord.setUpdateTime(new java.util.Date());
+            projectAuthorService.updateById(authorRecord);
+            return authorRecord.getVisible();
+        } else {
+            throw new ApiException(ErrorCode.Business.COMMON_UNSUPPORTED_OPERATION, "未知的成果类型");
         }
-
-        System.out.println("DEBUG: 找到作者记录 - authorId=" + authorRecord.getId() + ", 当前visible=" + authorRecord.getVisible());
-
-        // 更新可见性
-        authorRecord.setVisible(Boolean.TRUE.equals(visible));
-        authorRecord.setUpdateTime(new java.util.Date());
-        boolean updateResult = authorService.updateById(authorRecord);
-
-        System.out.println("DEBUG: 更新结果=" + updateResult + ", 新visible=" + authorRecord.getVisible());
-
-        return authorRecord.getVisible();
     }
     /**
      * 获取公开成果列表（所有未删除的成果）
@@ -966,13 +1624,22 @@ public class LabAchievementApplicationService {
         // 按作者查询：优先使用精确的用户ID，如果没有提供则使用姓名模糊查询
         if (query.getAuthorUserId() != null) {
             // 精确查询：按用户ID查询
-            List<Long> idsByUser = authorService.lambdaQuery()
-                .eq(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getDeleted, false)
-                .eq(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getUserId, query.getAuthorUserId())
+            List<Long> idsByUser = new java.util.ArrayList<>();
+            idsByUser.addAll(authorService.lambdaQuery()
+                .eq(com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity::getDeleted, false)
+                .eq(com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity::getUserId, query.getAuthorUserId())
                 .list()
                 .stream()
-                .map(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getAchievementId)
-                .collect(Collectors.toList());
+                .map(com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity::getPaperId)
+                .collect(Collectors.toList()));
+            idsByUser.addAll(projectAuthorService.lambdaQuery()
+                .eq(LabProjectAuthorEntity::getDeleted, false)
+                .eq(LabProjectAuthorEntity::getUserId, query.getAuthorUserId())
+                .list()
+                .stream()
+                .map(LabProjectAuthorEntity::getProjectId)
+                .collect(Collectors.toList()));
+            idsByUser = idsByUser.stream().distinct().collect(Collectors.toList());
             if (idsByUser.isEmpty()) {
                 return new PageDTO<>(java.util.Collections.emptyList(), 0L);
             }
@@ -982,20 +1649,20 @@ public class LabAchievementApplicationService {
             Set<Long> matchedAchievementIds = new java.util.HashSet<>();
 
             // 查询作者表中姓名匹配的记录
-            com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper<com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity> authorQuery =
+            com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper<com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity> authorQuery =
                 authorService.lambdaQuery()
-                    .eq(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getDeleted, false)
-                    .and(w -> w.like(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getName, query.getAuthorName())
-                        .or().like(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getNameEn, query.getAuthorName()));
+                    .eq(com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity::getDeleted, false)
+                    .and(w -> w.like(com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity::getName, query.getAuthorName())
+                        .or().like(com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity::getNameEn, query.getAuthorName()));
 
             // 如果提供了邮箱，则进一步筛选
             if (StringUtils.hasText(query.getAuthorEmail())) {
-                authorQuery.eq(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getEmail, query.getAuthorEmail());
+                authorQuery.eq(com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity::getEmail, query.getAuthorEmail());
             }
 
-            List<com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity> authorMatches = authorQuery.list();
+            List<com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity> authorMatches = authorQuery.list();
 
-            for (com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity author : authorMatches) {
+            for (com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity author : authorMatches) {
                 if (author.getUserId() != null) {
                     // 内部作者：必须验证邮箱一致性
                     com.agileboot.domain.lab.user.db.LabUserEntity user = labUserService.getById(author.getUserId());
@@ -1003,7 +1670,7 @@ public class LabAchievementApplicationService {
                         // 只有当作者表和用户表的邮箱一致时才匹配
                         if (author.getEmail() != null && user.getEmail() != null &&
                             author.getEmail().equalsIgnoreCase(user.getEmail())) {
-                            matchedAchievementIds.add(author.getAchievementId());
+                            matchedAchievementIds.add(author.getPaperId());
                         }
                         // 其他情况都跳过，确保数据准确性
                     }
@@ -1012,9 +1679,35 @@ public class LabAchievementApplicationService {
                     if (StringUtils.hasText(query.getAuthorEmail()) &&
                         author.getEmail() != null &&
                         author.getEmail().equalsIgnoreCase(query.getAuthorEmail())) {
-                        matchedAchievementIds.add(author.getAchievementId());
+                        matchedAchievementIds.add(author.getPaperId());
                     }
                     // 没有提供邮箱参数时，跳过所有外部作者，避免重名混淆
+                }
+            }
+
+            // 查询项目作者
+            com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper<LabProjectAuthorEntity> projectAuthorQuery =
+                projectAuthorService.lambdaQuery()
+                    .eq(LabProjectAuthorEntity::getDeleted, false)
+                    .and(w -> w.like(LabProjectAuthorEntity::getName, query.getAuthorName())
+                        .or().like(LabProjectAuthorEntity::getNameEn, query.getAuthorName()));
+            if (StringUtils.hasText(query.getAuthorEmail())) {
+                projectAuthorQuery.eq(LabProjectAuthorEntity::getEmail, query.getAuthorEmail());
+            }
+            List<LabProjectAuthorEntity> projectAuthorMatches = projectAuthorQuery.list();
+            for (LabProjectAuthorEntity author : projectAuthorMatches) {
+                if (author.getUserId() != null) {
+                    com.agileboot.domain.lab.user.db.LabUserEntity user = labUserService.getById(author.getUserId());
+                    if (user != null && !Boolean.TRUE.equals(user.getDeleted())) {
+                        if (author.getEmail() != null && user.getEmail() != null &&
+                            author.getEmail().equalsIgnoreCase(user.getEmail())) {
+                            matchedAchievementIds.add(author.getProjectId());
+                        }
+                    }
+                } else if (StringUtils.hasText(query.getAuthorEmail()) &&
+                    author.getEmail() != null &&
+                    author.getEmail().equalsIgnoreCase(query.getAuthorEmail())) {
+                    matchedAchievementIds.add(author.getProjectId());
                 }
             }
 
@@ -1072,6 +1765,73 @@ public class LabAchievementApplicationService {
             .map(com.agileboot.domain.lab.achievement.dto.PublicAchievementDTO::fromEntity)
             .collect(Collectors.toList());
 
+        if (!dtoList.isEmpty()) {
+            List<Long> paperIds = result.getRecords().stream()
+                .filter(record -> Integer.valueOf(1).equals(record.getType()))
+                .map(LabAchievementEntity::getId)
+                .collect(Collectors.toList());
+            java.util.Map<Long, LabPaperEntity> paperMap = new java.util.HashMap<>();
+            if (!paperIds.isEmpty()) {
+                paperService.listByIds(paperIds).forEach(paper -> {
+                    if (paper != null && paper.getId() != null) {
+                        paperMap.put(paper.getId(), paper);
+                    }
+                });
+            }
+
+            List<Long> projectIds = result.getRecords().stream()
+                .filter(record -> Integer.valueOf(2).equals(record.getType()))
+                .map(LabAchievementEntity::getId)
+                .collect(Collectors.toList());
+            java.util.Map<Long, LabProjectEntity> projectMap = new java.util.HashMap<>();
+            if (!projectIds.isEmpty()) {
+                projectService.listByIds(projectIds).forEach(project -> {
+                    if (project != null && project.getId() != null) {
+                        projectMap.put(project.getId(), project);
+                    }
+                });
+            }
+
+            for (com.agileboot.domain.lab.achievement.dto.PublicAchievementDTO dto : dtoList) {
+                mergeChildSnapshotIntoPublicDto(dto, paperMap.get(dto.getId()), projectMap.get(dto.getId()));
+            }
+
+            if (!paperIds.isEmpty()) {
+                java.util.Map<Long, List<LabFundPaperRelEntity>> fundEntityMap = fundPaperRelService.lambdaQuery()
+                    .in(LabFundPaperRelEntity::getPaperId, paperIds)
+                    .list()
+                    .stream()
+                    .collect(Collectors.groupingBy(LabFundPaperRelEntity::getPaperId));
+                for (com.agileboot.domain.lab.achievement.dto.PublicAchievementDTO dto : dtoList) {
+                    if (Integer.valueOf(1).equals(dto.getType())) {
+                        List<LabFundPaperRelEntity> rels = fundEntityMap.get(dto.getId());
+                        if (rels == null) {
+                            dto.setFundAssociations(java.util.Collections.emptyList());
+                        } else {
+                            dto.setFundAssociations(rels.stream()
+                                .map(rel -> {
+                                    LabFundAssociationDTO item = new LabFundAssociationDTO();
+                                    item.setFundId(rel.getFundId());
+                                    item.setAmount(rel.getAmount());
+                                    return item;
+                                })
+                                .collect(Collectors.toList()));
+                        }
+                    } else {
+                        dto.setFundAssociations(java.util.Collections.emptyList());
+                    }
+                }
+            } else {
+                for (com.agileboot.domain.lab.achievement.dto.PublicAchievementDTO dto : dtoList) {
+                    if (Integer.valueOf(1).equals(dto.getType())) {
+                        dto.setFundAssociations(java.util.Collections.emptyList());
+                    } else {
+                        dto.setFundAssociations(java.util.Collections.emptyList());
+                    }
+                }
+            }
+        }
+
         // 填充分类名称
         if (!dtoList.isEmpty()) {
             List<Long> categoryIds = dtoList.stream()
@@ -1103,26 +1863,48 @@ public class LabAchievementApplicationService {
 
         // 填充作者信息（过滤可见性：外部作者全显示，内部作者仅显示visible=true）
         if (!dtoList.isEmpty()) {
-            List<Long> achievementIds = dtoList.stream()
+            List<Long> paperIds = dtoList.stream()
+                .filter(dto -> Integer.valueOf(1).equals(dto.getType()))
+                .map(com.agileboot.domain.lab.achievement.dto.PublicAchievementDTO::getId)
+                .collect(Collectors.toList());
+            List<Long> projectIds = dtoList.stream()
+                .filter(dto -> Integer.valueOf(2).equals(dto.getType()))
                 .map(com.agileboot.domain.lab.achievement.dto.PublicAchievementDTO::getId)
                 .collect(Collectors.toList());
 
-            List<com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity> allAuthors =
-                authorService.lambdaQuery()
-                    .in(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getAchievementId, achievementIds)
-                    .eq(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getDeleted, false)
-                    .orderByAsc(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getAuthorOrder)
-                    .list();
+            Map<Long, List<com.agileboot.domain.lab.paper.dto.PublicPaperAuthorDTO>> authorMap = new java.util.HashMap<>();
 
-            // 按成果ID分组
-            Map<Long, List<com.agileboot.domain.lab.achievement.dto.PublicAuthorDTO>> authorMap = allAuthors.stream()
-                .collect(Collectors.groupingBy(
-                    com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getAchievementId,
-                    Collectors.mapping(
-                        com.agileboot.domain.lab.achievement.dto.PublicAuthorDTO::fromEntity,
-                        Collectors.toList()
-                    )
-                ));
+            if (!paperIds.isEmpty()) {
+                List<com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity> allAuthors =
+                    authorService.lambdaQuery()
+                        .in(com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity::getPaperId, paperIds)
+                        .eq(com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity::getDeleted, false)
+                        .orderByAsc(com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity::getAuthorOrder)
+                        .list();
+                for (com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity a : allAuthors) {
+                    authorMap.computeIfAbsent(a.getPaperId(), k -> new java.util.ArrayList<>())
+                        .add(com.agileboot.domain.lab.paper.dto.PublicPaperAuthorDTO.fromEntity(a));
+                }
+            }
+            if (!projectIds.isEmpty()) {
+                List<LabProjectAuthorEntity> projectAuthors = projectAuthorService.getAuthorsByProjectIds(projectIds);
+                java.util.Set<Long> projectIdsWithAuthors = new java.util.HashSet<>();
+                for (LabProjectAuthorEntity author : projectAuthors) {
+                    authorMap.computeIfAbsent(author.getProjectId(), k -> new java.util.ArrayList<>())
+                        .add(convertProjectPublicAuthor(author));
+                    projectIdsWithAuthors.add(author.getProjectId());
+                }
+                List<Long> legacyNeeded = projectIds.stream()
+                    .filter(id -> !projectIdsWithAuthors.contains(id) || !authorMap.containsKey(id))
+                    .collect(Collectors.toList());
+                if (!legacyNeeded.isEmpty()) {
+                    List<com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity> legacy = queryLegacyProjectAuthors(legacyNeeded);
+                    for (com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity legacyAuthor : legacy) {
+                        authorMap.computeIfAbsent(legacyAuthor.getPaperId(), k -> new java.util.ArrayList<>())
+                            .add(com.agileboot.domain.lab.paper.dto.PublicPaperAuthorDTO.fromEntity(legacyAuthor));
+                    }
+                }
+            }
 
             // 为每个成果设置作者列表
             for (com.agileboot.domain.lab.achievement.dto.PublicAchievementDTO dto : dtoList) {
@@ -1149,6 +1931,15 @@ public class LabAchievementApplicationService {
         com.agileboot.domain.lab.achievement.dto.PublicAchievementDTO dto =
             com.agileboot.domain.lab.achievement.dto.PublicAchievementDTO.fromEntity(entity);
 
+        LabPaperEntity paper = null;
+        LabProjectEntity project = null;
+        if (Integer.valueOf(1).equals(entity.getType())) {
+            paper = paperService.getById(entity.getId());
+        } else if (Integer.valueOf(2).equals(entity.getType())) {
+            project = projectService.getById(entity.getId());
+        }
+        mergeChildSnapshotIntoPublicDto(dto, paper, project);
+
         // 填充分类名称
         if (entity.getCategoryId() != null) {
             com.agileboot.domain.lab.category.db.LabAchievementCategoryEntity category =
@@ -1159,18 +1950,51 @@ public class LabAchievementApplicationService {
         }
 
         // 获取作者列表（显示所有作者，不过滤可见性）
-        List<com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity> authors =
-            authorService.lambdaQuery()
-                .eq(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getAchievementId, id)
-                .eq(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getDeleted, false)
-                .orderByAsc(com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity::getAuthorOrder)
+        if (Integer.valueOf(1).equals(entity.getType())) {
+            List<com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity> authors =
+                authorService.lambdaQuery()
+                    .eq(com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity::getPaperId, id)
+                    .eq(com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity::getDeleted, false)
+                    .orderByAsc(com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity::getAuthorOrder)
+                    .list();
+            dto.setAuthors(authors.stream()
+                .map(com.agileboot.domain.lab.paper.dto.PublicPaperAuthorDTO::fromEntity)
+                .collect(Collectors.toList()));
+        } else if (Integer.valueOf(2).equals(entity.getType())) {
+            List<LabProjectAuthorEntity> authors = projectAuthorService.getAuthorsByProjectId(id);
+            List<com.agileboot.domain.lab.paper.dto.PublicPaperAuthorDTO> projectAuthorDtos = authors.stream()
+                .map(this::convertProjectPublicAuthor)
+                .collect(Collectors.toList());
+            if (projectAuthorDtos.isEmpty()) {
+                List<com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity> legacy =
+                    queryLegacyProjectAuthors(java.util.Collections.singletonList(id));
+                projectAuthorDtos = legacy.stream()
+                    .map(com.agileboot.domain.lab.paper.dto.PublicPaperAuthorDTO::fromEntity)
+                    .collect(Collectors.toList());
+            }
+            dto.setAuthors(projectAuthorDtos);
+        } else {
+            dto.setAuthors(java.util.Collections.emptyList());
+        }
+        if (Integer.valueOf(1).equals(entity.getType())) {
+            List<LabFundPaperRelEntity> rels = fundPaperRelService.lambdaQuery()
+                .eq(LabFundPaperRelEntity::getPaperId, entity.getId())
                 .list();
-
-        List<com.agileboot.domain.lab.achievement.dto.PublicAuthorDTO> authorDTOs = authors.stream()
-            .map(com.agileboot.domain.lab.achievement.dto.PublicAuthorDTO::fromEntity)
-            .collect(Collectors.toList());
-
-        dto.setAuthors(authorDTOs);
+            if (rels == null || rels.isEmpty()) {
+                dto.setFundAssociations(java.util.Collections.emptyList());
+            } else {
+                dto.setFundAssociations(rels.stream()
+                    .map(rel -> {
+                        LabFundAssociationDTO item = new LabFundAssociationDTO();
+                        item.setFundId(rel.getFundId());
+                        item.setAmount(rel.getAmount());
+                        return item;
+                    })
+                    .collect(Collectors.toList()));
+            }
+        } else {
+            dto.setFundAssociations(java.util.Collections.emptyList());
+        }
         return dto;
     }
 
@@ -1194,7 +2018,7 @@ public class LabAchievementApplicationService {
 
         // 批量插入作者记录（自动绑定内部作者：userId > username/email/phone/studentNumber > 唯一姓名）
         java.util.Set<Long> internalUsersInThisList = new java.util.HashSet<>();
-        List<com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity> authorEntities =
+        List<com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity> authorEntities =
             authors.stream().map(authorCmd -> {
                 // 自动绑定 userId（如果未提供）
                 if (authorCmd.getUserId() == null) {
@@ -1275,9 +2099,9 @@ public class LabAchievementApplicationService {
                     internalUsersInThisList.add(authorCmd.getUserId());
                 }
 
-                com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity entity =
-                    new com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity();
-                entity.setAchievementId(achievementId);
+                com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity entity =
+                    new com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity();
+                entity.setPaperId(achievementId);
                 entity.setUserId(authorCmd.getUserId());
                 entity.setName(authorCmd.getName());
                 entity.setNameEn(authorCmd.getNameEn());
@@ -1294,14 +2118,14 @@ public class LabAchievementApplicationService {
             }).collect(Collectors.toList());
 
         // 统一使用 upsert 逻辑，避免唯一键冲突
-        for (com.agileboot.domain.lab.achievement.db.LabAchievementAuthorEntity e : authorEntities) {
+        for (com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity e : authorEntities) {
             if (e.getUserId() != null) {
                 // 内部作者：先尝试删除可能存在的记录，然后插入新记录
                 try {
                     System.out.println("DEBUG: 准备处理内部作者 " + e.getName() + " (userId=" + e.getUserId() + ")");
 
                     // 物理删除所有该 (achievement_id, user_id) 的记录（包括软删的）
-                    int deletedCount = authorService.hardDeleteByAchievementIdAndUserId(achievementId, e.getUserId());
+                    int deletedCount = authorService.hardDeleteByPaperIdAndUserId(achievementId, e.getUserId());
                     System.out.println("DEBUG: 删除了 " + deletedCount + " 条记录");
 
                     // 插入新记录
@@ -1320,5 +2144,57 @@ public class LabAchievementApplicationService {
                 authorService.save(e);
             }
         }
+    }
+
+    private LabPaperAuthorDTO convertProjectAuthor(LabProjectAuthorEntity entity) {
+        LabPaperAuthorDTO dto = new LabPaperAuthorDTO();
+        dto.setId(entity.getId());
+        dto.setPaperId(entity.getProjectId());
+        dto.setUserId(entity.getUserId());
+        dto.setName(entity.getName());
+        dto.setNameEn(entity.getNameEn());
+        dto.setEmail(entity.getEmail());
+        dto.setAffiliation(entity.getAffiliation());
+        dto.setAuthorOrder(entity.getAuthorOrder());
+        dto.setIsCorresponding(Boolean.TRUE.equals(entity.getIsCorresponding()));
+        dto.setRole(entity.getRole());
+        dto.setVisible(Boolean.TRUE.equals(entity.getVisible()));
+        dto.setIsInternal(entity.getUserId() != null);
+        return dto;
+    }
+
+    private List<com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity> queryLegacyProjectAuthors(List<Long> projectIds) {
+        if (projectIds == null || projectIds.isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+        return authorService.lambdaQuery()
+            .in(com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity::getPaperId, projectIds)
+            .eq(com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity::getDeleted, false)
+            .orderByAsc(com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity::getAuthorOrder)
+            .list();
+    }
+
+    private PublicPaperAuthorDTO convertProjectPublicAuthor(LabProjectAuthorEntity entity) {
+        PublicPaperAuthorDTO dto = new PublicPaperAuthorDTO();
+        dto.setName(entity.getName());
+        dto.setNameEn(entity.getNameEn());
+        dto.setAffiliation(entity.getAffiliation());
+        dto.setCorresponding(Boolean.TRUE.equals(entity.getIsCorresponding()));
+        dto.setOrder(entity.getAuthorOrder());
+        return dto;
+    }
+
+    private boolean isAchievementAuthor(Long achievementId, Long userId) {
+        if (userId == null) {
+            return false;
+        }
+        if (authorService.isAuthor(achievementId, userId)) {
+            return true;
+        }
+        return projectAuthorService.lambdaQuery()
+            .eq(LabProjectAuthorEntity::getProjectId, achievementId)
+            .eq(LabProjectAuthorEntity::getUserId, userId)
+            .eq(LabProjectAuthorEntity::getDeleted, false)
+            .count() > 0;
     }
 }

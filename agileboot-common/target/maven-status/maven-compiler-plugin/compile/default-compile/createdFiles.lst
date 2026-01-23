@@ -1,4 +1,5 @@
 com/agileboot/common/enums/common/MenuComponentEnum.class
+com/agileboot/common/core/validation/CreateGroup.class
 com/agileboot/common/enums/common/StatusEnum.class
 com/agileboot/common/enums/DictionaryEnum.class
 com/agileboot/common/enums/dictionary/DictionaryData.class
@@ -16,6 +17,7 @@ com/agileboot/common/constant/Constants$Captcha.class
 com/agileboot/common/annotation/ExcelColumn.class
 com/agileboot/common/exception/error/ErrorCode$External.class
 com/agileboot/common/enums/common/MenuTypeEnum.class
+com/agileboot/common/core/validation/UpdateGroup.class
 com/agileboot/common/enums/common/LoginStatusEnum.class
 com/agileboot/common/enums/common/VisibleStatusEnum.class
 com/agileboot/common/utils/ip/OfflineIpRegionUtil.class
