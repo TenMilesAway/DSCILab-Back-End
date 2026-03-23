@@ -1,5 +1,6 @@
 package com.agileboot.domain.lab.category;
 
+import com.agileboot.common.exception.ApiException;
 import com.agileboot.domain.lab.category.db.LabAchievementCategoryEntity;
 import com.agileboot.domain.lab.category.db.LabAchievementCategoryService;
 import com.agileboot.domain.lab.category.dto.LabAchievementCategoryDTO;
@@ -96,5 +97,42 @@ class LabAchievementCategoryApplicationServiceTest {
         verify(categoryService, times(1)).getById(categoryId);
         verify(categoryService, times(1)).hasChildren(categoryId);
         verify(categoryService, times(1)).isUsedByAchievements(categoryId);
+    }
+
+    @Test
+    void testDeleteCategoryShouldRewriteUniqueFieldsBeforeSoftDelete() {
+        Long categoryId = 55L;
+        LabAchievementCategoryEntity entity = new LabAchievementCategoryEntity();
+        entity.setId(categoryId);
+        entity.setParentId(2L);
+        entity.setCategoryCode("PROJECT_CAT");
+        entity.setCategoryName("测试2");
+        entity.setIsSystem(false);
+
+        when(categoryService.getById(categoryId)).thenReturn(entity);
+        when(categoryService.isUsedByAchievements(categoryId)).thenReturn(false);
+        when(categoryService.hasChildren(categoryId)).thenReturn(false);
+
+        applicationService.deleteCategory(categoryId);
+
+        verify(categoryService, times(1)).updateById(entity);
+        verify(categoryService, times(1)).removeById(categoryId);
+        assertTrue(entity.getCategoryCode().contains("_deleted_" + categoryId));
+        assertTrue(entity.getCategoryName().contains("_deleted_" + categoryId));
+    }
+
+    @Test
+    void testDeleteCategoryShouldRejectWhenHasChildren() {
+        Long categoryId = 54L;
+        LabAchievementCategoryEntity entity = new LabAchievementCategoryEntity();
+        entity.setId(categoryId);
+        entity.setIsSystem(false);
+
+        when(categoryService.getById(categoryId)).thenReturn(entity);
+        when(categoryService.isUsedByAchievements(categoryId)).thenReturn(false);
+        when(categoryService.hasChildren(categoryId)).thenReturn(true);
+
+        assertThrows(ApiException.class, () -> applicationService.deleteCategory(categoryId));
+        verify(categoryService, never()).removeById(anyLong());
     }
 }

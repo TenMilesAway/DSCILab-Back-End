@@ -14,6 +14,7 @@ com/agileboot/admin/customize/service/permission/MenuPermissionService.class
 com/agileboot/admin/controller/lab/LabAchievementAuthorController.class
 com/agileboot/admin/customize/aop/accessLog/OperationLogModel.class
 com/agileboot/admin/controller/lab/LabUserRelationshipController.class
+com/agileboot/admin/controller/open/OpenPaperController.class
 com/agileboot/admin/customize/service/permission/model/checker/DeptTreeDataPermissionChecker.class
 com/agileboot/admin/controller/system/SysUserController.class
 com/agileboot/admin/controller/open/OpenLabController.class
@@ -36,8 +37,10 @@ com/agileboot/admin/customize/service/login/UserDetailsServiceImpl.class
 com/agileboot/admin/controller/common/FileController.class
 com/agileboot/admin/customize/aop/accessLog/AccessLog.class
 com/agileboot/admin/customize/service/permission/model/checker/SingleDeptDataPermissionChecker.class
+com/agileboot/admin/controller/lab/LabPaperController.class
 com/agileboot/admin/customize/service/permission/model/AbstractDataPermissionChecker.class
 com/agileboot/admin/controller/open/OpenCategoryController.class
+com/agileboot/admin/controller/lab/LabProjectController.class
 com/agileboot/admin/controller/system/MonitorController.class
 com/agileboot/admin/controller/lab/LabAchievementV2Controller.class
 com/agileboot/admin/controller/common/LoginController.class
@@ -46,6 +49,7 @@ com/agileboot/admin/customize/service/permission/model/checker/OnlySelfDataPermi
 com/agileboot/admin/customize/service/permission/model/checker/CustomDataPermissionChecker.class
 com/agileboot/admin/controller/lab/LabDictController$CategoryFlatItem.class
 com/agileboot/admin/controller/system/SysPostController.class
+com/agileboot/admin/controller/open/OpenProjectController.class
 com/agileboot/admin/controller/system/SysLogsController.class
 com/agileboot/admin/customize/service/login/LoginService.class
 com/agileboot/admin/controller/lab/LabDictController$DictItem.class

@@ -235,18 +235,16 @@ public class LabAchievementCategoryApplicationService {
             throw new ApiException(ErrorCode.Business.COMMON_UNSUPPORTED_OPERATION);
         }
         if (categoryService.isUsedByAchievements(id)) {
-            // 需求：提示“该类型存在成果，不允许删除”
-            throw new ApiException(ErrorCode.Business.COMMON_UNSUPPORTED_OPERATION, "该类型存在成果，不允许删除");
+            throw new ApiException(ErrorCode.Business.CATEGORY_EXIST_ACHIEVEMENTS_NOT_ALLOW_DELETE);
         }
         if (categoryService.hasChildren(id)) {
-            // 类型存在下级时的专用提示
-            throw new ApiException(ErrorCode.Business.COMMON_UNSUPPORTED_OPERATION, "该类型存在下级类型，不允许删除");
+            throw new ApiException(ErrorCode.Business.CATEGORY_EXIST_CHILD_CATEGORY_NOT_ALLOW_DELETE);
         }
 
-        // 修改 category_code 以避免唯一约束冲突
-        String originalCode = entity.getCategoryCode();
-        String deletedCode = originalCode + "_deleted_" + System.currentTimeMillis();
-        entity.setCategoryCode(deletedCode);
+        // 删除前重写唯一索引相关字段，避免 (parent_id, category_name, deleted) 与 (category_code, deleted) 冲突
+        String deletedSuffix = "_deleted_" + id;
+        entity.setCategoryCode(buildDeletedMarker(entity.getCategoryCode(), deletedSuffix, 50));
+        entity.setCategoryName(buildDeletedMarker(entity.getCategoryName(), deletedSuffix, 100));
         categoryService.updateById(entity);
 
         // 然后执行软删除
@@ -266,17 +264,18 @@ public class LabAchievementCategoryApplicationService {
 
         // 检查是否被成果使用
         if (categoryService.isUsedByAchievements(uncategorized.getId())) {
-            throw new ApiException(ErrorCode.Business.COMMON_UNSUPPORTED_OPERATION, "该类型存在成果，不允许删除");
+            throw new ApiException(ErrorCode.Business.CATEGORY_EXIST_ACHIEVEMENTS_NOT_ALLOW_DELETE);
         }
 
         // 检查是否有子类型
         if (categoryService.hasChildren(uncategorized.getId())) {
-            throw new ApiException(ErrorCode.Business.COMMON_UNSUPPORTED_OPERATION, "该类型存在下级类型，不允许删除");
+            throw new ApiException(ErrorCode.Business.CATEGORY_EXIST_CHILD_CATEGORY_NOT_ALLOW_DELETE);
         }
 
-        // 修改 category_code 以避免唯一约束冲突
-        String deletedCode = "UNCATEGORIZED_deleted_" + System.currentTimeMillis();
-        uncategorized.setCategoryCode(deletedCode);
+        // 删除前重写唯一索引相关字段，避免 (parent_id, category_name, deleted) 与 (category_code, deleted) 冲突
+        String deletedSuffix = "_deleted_" + uncategorized.getId();
+        uncategorized.setCategoryCode(buildDeletedMarker(uncategorized.getCategoryCode(), deletedSuffix, 50));
+        uncategorized.setCategoryName(buildDeletedMarker(uncategorized.getCategoryName(), deletedSuffix, 100));
         categoryService.updateById(uncategorized);
 
         // 执行软删除
@@ -431,5 +430,14 @@ public class LabAchievementCategoryApplicationService {
         if (code.startsWith("_")) code = code.substring(1);
         if (code.endsWith("_")) code = code.substring(0, code.length() - 1);
         return code;
+    }
+
+    private String buildDeletedMarker(String original, String suffix, int maxLength) {
+        String base = StringUtils.hasText(original) ? original : "CAT";
+        int maxBaseLength = Math.max(1, maxLength - suffix.length());
+        if (base.length() > maxBaseLength) {
+            base = base.substring(0, maxBaseLength);
+        }
+        return base + suffix;
     }
 }

@@ -52,6 +52,7 @@ com/agileboot/domain/system/config/query/ConfigQuery.class
 com/agileboot/domain/lab/paper/command/CreatePaperCommand$CreatePaperAuthorCommand.class
 com/agileboot/domain/lab/category/db/LabAchievementCategoryService.class
 com/agileboot/domain/system/log/db/SysOperationLogEntity.class
+com/agileboot/domain/lab/project/command/CreateProjectCommand$ProjectAuthorCommand.class
 com/agileboot/domain/lab/category/db/LabAchievementCategoryMapper.class
 com/agileboot/domain/lab/achievement/command/AddAuthorCommand.class
 com/agileboot/domain/system/role/dto/RoleDTO.class
