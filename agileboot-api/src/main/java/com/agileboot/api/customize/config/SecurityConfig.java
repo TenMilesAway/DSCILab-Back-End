@@ -12,6 +12,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -53,7 +54,13 @@ public class SecurityConfig {
         };
     }
 
-
+    /**
+     * 强散列哈希加密实现
+     */
+    @Bean
+    public BCryptPasswordEncoder bCryptPasswordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
@@ -64,6 +71,9 @@ public class SecurityConfig {
             .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS) // 禁用 session
             .and()
             .authorizeRequests()
+            .antMatchers("/open/**").permitAll()  // 允许公开接口访问
+            .antMatchers("/dev-api/open/**").permitAll()  // 如果有dev-api前缀
+            .antMatchers("/**/open/**").permitAll()  // 通配符匹配
             .antMatchers("/common/**").permitAll()
             .anyRequest().authenticated()
             .and()

@@ -9,6 +9,7 @@
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/test/java/com/agileboot/integrationTest/db/SysMenuServiceImplTest.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/test/java/com/agileboot/domain/system/post/model/PostModelTest.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/test/java/com/agileboot/domain/system/user/model/UserModelTest.java
+/Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/test/java/com/agileboot/domain/lab/category/LabAchievementCategoryApplicationServiceTest.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/test/java/com/agileboot/integrationTest/db/SysDeptServiceImplTest.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/test/java/com/agileboot/integrationTest/db/SysUserServiceImplTest.java
 /Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-domain/src/test/java/com/agileboot/domain/system/monitor/dto/ServerInfoTest.java

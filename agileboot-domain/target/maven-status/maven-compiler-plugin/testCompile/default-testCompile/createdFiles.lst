@@ -1,6 +1,7 @@
 com/agileboot/integrationTest/db/SysConfigServiceImplTest.class
 com/agileboot/domain/system/config/model/ConfigModelTest.class
 com/agileboot/integrationTest/db/SysDeptServiceImplTest.class
+com/agileboot/domain/lab/category/LabAchievementCategoryApplicationServiceTest.class
 com/agileboot/domain/system/post/model/PostModelTest.class
 com/agileboot/domain/system/dept/model/DeptModelTest.class
 com/agileboot/integrationTest/db/SysUserServiceImplTest.class

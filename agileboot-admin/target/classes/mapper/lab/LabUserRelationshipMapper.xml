@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.agileboot.domain.lab.relationship.db.LabUserRelationshipMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.agileboot.domain.lab.relationship.db.LabUserRelationshipEntity">
+        <id column="id" property="id" />
+        <result column="teacher_id" property="teacherId" />
+        <result column="student_id" property="studentId" />
+        <result column="relationship_type" property="relationshipType" />
+        <result column="start_date" property="startDate" />
+        <result column="end_date" property="endDate" />
+        <result column="status" property="status" />
+        <result column="remark" property="remark" />
+        <result column="creator_id" property="creatorId" />
+        <result column="create_time" property="createTime" />
+        <result column="updater_id" property="updaterId" />
+        <result column="update_time" property="updateTime" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, teacher_id, student_id, relationship_type, start_date, end_date, status, remark,
+        creator_id, create_time, updater_id, update_time
+    </sql>
+
+    <!-- 查询导师的所有学生 -->
+    <select id="selectStudentsByTeacherId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM lab_user_relationship
+        WHERE teacher_id = #{teacherId}
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 查询学生的导师 -->
+    <select id="selectSupervisorByStudentId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM lab_user_relationship
+        WHERE student_id = #{studentId}
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+        ORDER BY create_time DESC
+        LIMIT 1
+    </select>
+
+    <!-- 检查师生关系是否存在 -->
+    <select id="selectByTeacherAndStudent" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM lab_user_relationship
+        WHERE teacher_id = #{teacherId}
+        AND student_id = #{studentId}
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+        ORDER BY create_time DESC
+        LIMIT 1
+    </select>
+
+    <!-- 结束学生的所有活跃导师关系 -->
+    <update id="endActiveRelationshipsByStudentId">
+        UPDATE lab_user_relationship
+        SET status = 2,
+            end_date = CURDATE(),
+            updater_id = #{updaterId},
+            update_time = NOW()
+        WHERE student_id = #{studentId}
+        AND status = 1
+    </update>
+
+    <!-- 统计导师的学生数量 -->
+    <select id="countStudentsByTeacherId" resultType="int">
+        SELECT COUNT(*)
+        FROM lab_user_relationship
+        WHERE teacher_id = #{teacherId}
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+    </select>
+
+</mapper>

@@ -4,6 +4,9 @@ import com.agileboot.common.core.base.BaseController;
 import com.agileboot.common.core.dto.ResponseDTO;
 import com.agileboot.domain.lab.user.LabUserApplicationService;
 import com.agileboot.domain.lab.user.dto.LabUserProfileDTO;
+import com.agileboot.domain.lab.user.LabUserCrudApplicationService;
+import java.util.List;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -13,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 /**
  * 实验室用户控制器
- * 
+ *
  * @author agileboot
  */
 @Tag(name = "实验室用户API", description = "实验室用户相关接口")
@@ -23,6 +26,7 @@ import org.springframework.web.bind.annotation.*;
 public class LabUserController extends BaseController {
 
     private final LabUserApplicationService labUserApplicationService;
+    private final LabUserCrudApplicationService labUserCrudApplicationService;
 
     /**
      * 获取当前登录用户的个人信息
@@ -90,4 +94,18 @@ public class LabUserController extends BaseController {
     public ResponseDTO<String> healthCheck() {
         return ResponseDTO.ok("实验室用户服务运行正常！当前时间: " + java.time.LocalDateTime.now());
     }
+
+    /**
+     * 搜索用户（简化别名）
+     * 等价于 /lab/users/crud/search，返回 LabUserProfileDTO（包含 email 等字段）
+     */
+    @Operation(summary = "搜索用户（别名）", description = "同 /lab/users/crud/search，便于前端统一调用")
+    @Parameter(name = "keyword", description = "搜索关键词", required = true)
+    @PreAuthorize("@permission.has('lab:user:list') OR @labUserPermission.isAdmin()")
+    @GetMapping("/search")
+    public ResponseDTO<List<LabUserProfileDTO>> searchUsersAlias(@RequestParam String keyword) {
+        List<LabUserProfileDTO> result = labUserCrudApplicationService.searchUsers(keyword);
+        return ResponseDTO.ok(result);
+    }
+
 }

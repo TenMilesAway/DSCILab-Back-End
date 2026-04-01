@@ -10,6 +10,7 @@ server:
     uri-encoding: UTF-8
     # 连接数满后的排队数，默认为100
     accept-count: 1000
+
     threads:
       # tomcat最大线程数，默认为200
       max: 800
@@ -22,6 +23,9 @@ server:
 spring:
   profiles:
     active: basic,dev
+#  messages:
+#    basename: i18n/messages
+#    encoding: UTF-8
 
 # 如果需要无Mysql  无Redis直接启动的话  可以将这两个参数置为true, 并且spring.profile.active: dev换成test
 # redis的端口可能会被占用，如果被占用请自己修改一下端口号
@@ -29,7 +33,16 @@ agileboot:
   embedded:
     mysql: false
     redis: false
+  auth:
+    use-lab-only: true
+  traceRequestIdKey: traceId
 
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    table: flyway_schema_history
 
 
 springdoc:
@@ -46,3 +59,4 @@ springdoc:
       packages-to-scan: com.agileboot.admin.controller.lab
     - group: '开放接口'
       packages-to-scan: com.agileboot.admin.controller.open
+

@@ -15,6 +15,10 @@ import java.time.Year;
 @Schema(description = "更新个人信息命令")
 public class UpdateProfileCommand {
 
+    @Schema(description = "学号/工号")
+    @Size(max = 50, message = "学号/工号长度不能超过50个字符")
+    private String studentNumber;
+
     @Schema(description = "真实姓名")
     @NotBlank(message = "真实姓名不能为空")
     @Size(max = 50, message = "真实姓名长度不能超过50个字符")
@@ -48,12 +52,24 @@ public class UpdateProfileCommand {
     @Size(max = 100, message = "邮箱长度不能超过100个字符")
     private String email;
 
+    @Schema(description = "状态：1=在读/在职,2=毕业/离职")
+    @Min(value = 1, message = "状态值必须在1-2之间")
+    @Max(value = 2, message = "状态值必须在1-2之间")
+    private Integer status;
+
+    @Schema(description = "入学/入职年份")
+    private Year enrollmentYear;
+
     @Schema(description = "毕业/离职年份")
     private Year graduationYear;
 
     @Schema(description = "毕业去向")
     @Size(max = 255, message = "毕业去向长度不能超过255个字符")
     private String graduationDest;
+
+    @Schema(description = "照片路径")
+    @Size(max = 500, message = "照片路径长度不能超过500个字符")
+    private String photo;
 
     @Schema(description = "个人简历")
     @Size(max = 5000, message = "个人简历长度不能超过5000个字符")

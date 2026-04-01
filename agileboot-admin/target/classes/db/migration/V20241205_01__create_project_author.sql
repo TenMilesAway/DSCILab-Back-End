@@ -1,0 +1,23 @@
+CREATE TABLE IF NOT EXISTS `lab_project_author` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `project_id` bigint NOT NULL COMMENT '项目ID（lab_achievement_project.id）',
+  `user_id` bigint DEFAULT NULL COMMENT '内部作者 user_id；NULL 代表外部作者',
+  `name` varchar(100) COLLATE utf8mb4_general_ci NOT NULL COMMENT '作者姓名',
+  `name_en` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '英文姓名',
+  `email` varchar(200) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '邮箱',
+  `affiliation` varchar(300) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '单位/机构',
+  `author_order` int NOT NULL COMMENT '作者顺序（>0）',
+  `is_corresponding` tinyint(1) DEFAULT '0' COMMENT '是否通讯作者',
+  `role` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '作者角色/贡献',
+  `visible` tinyint(1) DEFAULT '1' COMMENT '内部作者是否在公开页展示',
+  `creator_id` bigint DEFAULT NULL COMMENT '创建者ID',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updater_id` bigint DEFAULT NULL COMMENT '更新者ID',
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `deleted` tinyint(1) DEFAULT '0',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_project_author_order` (`project_id`,`author_order`,`deleted`),
+  UNIQUE KEY `uniq_project_author_user` (`project_id`,`user_id`),
+  KEY `idx_project_author_user` (`user_id`),
+  CONSTRAINT `chk_project_author_order_positive` CHECK ((`author_order` > 0))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='项目作者表';

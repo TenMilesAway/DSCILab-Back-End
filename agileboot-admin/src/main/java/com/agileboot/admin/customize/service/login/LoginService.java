@@ -213,9 +213,12 @@ public class LoginService {
     }
 
     public String decryptPassword(String originalPassword) {
+        // 允许在dev关闭RSA：当禁用时，直接返回明文
+        if (!AgileBootConfig.isRsaEnabled()) {
+            return originalPassword;
+        }
         byte[] decryptBytes = SecureUtil.rsa(AgileBootConfig.getRsaPrivateKey(), null)
             .decrypt(Base64.decode(originalPassword), KeyType.PrivateKey);
-
         return StrUtil.str(decryptBytes, CharsetUtil.CHARSET_UTF_8);
     }
 

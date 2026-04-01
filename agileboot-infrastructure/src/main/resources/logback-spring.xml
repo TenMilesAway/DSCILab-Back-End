@@ -4,10 +4,9 @@
   <!-- 日志存放路径 在xml文件夹中 -->
   <springProperty name="log.path" source="logging.file.path"/>
 
-  <springProperty name="console.pattern" source="logging.pattern.console"/>
-
   <!-- 日志输出格式 -->
   <property name="log.pattern" value="%d{HH:mm:ss.SSS} [%thread] %-5level %logger{20} - [%method,%line] - %msg%n"/>
+  <property name="console.pattern" value="%d{HH:mm:ss.SSS} [%thread] %-5level %logger{20} - [%method,%line] - %msg%n"/>
 
   <!-- 控制台输出 -->
   <appender name="console" class="ch.qos.logback.core.ConsoleAppender">

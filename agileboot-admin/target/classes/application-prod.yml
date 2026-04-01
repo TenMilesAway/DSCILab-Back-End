@@ -1,0 +1,97 @@
+# 生产环境配置
+spring:
+    datasource:
+        type: com.alibaba.druid.pool.DruidDataSource
+        driverClassName: com.mysql.cj.jdbc.Driver
+        druid:
+            webStatFilter:
+                enabled: false  # 生产环境关闭监控
+            statViewServlet:
+                enabled: false  # 生产环境关闭监控
+            filter:
+                stat:
+                    enabled: true
+                    log-slow-sql: true
+                    slow-sql-millis: 2000
+                    merge-sql: true
+                wall:
+                    config:
+                        multi-statement-allow: true
+        dynamic:
+            primary: master
+            strict: false
+            druid:
+                # 生产环境连接池配置
+                initialSize: 10
+                minIdle: 20
+                maxActive: 50
+                maxWait: 60000
+                timeBetweenEvictionRunsMillis: 60000
+                minEvictableIdleTimeMillis: 300000
+                maxEvictableIdleTimeMillis: 900000
+                validationQuery: SELECT 1 FROM DUAL
+                testWhileIdle: true
+                testOnBorrow: false
+                testOnReturn: false
+            datasource:
+                # 主库数据源 - 生产环境配置
+                master:
+                    url: jdbc:mysql://localhost:3306/web?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8
+                    username: root
+                    password: 12345
+
+    # Redis配置 - 生产环境
+    redis:
+        host: 127.0.0.1
+        port: 6379
+        database: 0
+        password:
+        timeout: 10s
+        lettuce:
+            pool:
+                min-idle: 5
+                max-idle: 20
+                max-active: 50
+                max-wait: -1ms
+
+    flyway:
+        enabled: false  # 禁用 Flyway，因为 MySQL 5.7 兼容性问题
+        locations: classpath:db/migration
+        baseline-on-migrate: true
+        table: flyway_schema_history
+
+# 日志配置
+logging:
+    level:
+        root: INFO
+        com.agileboot: INFO
+        org.springframework.security: WARN
+    file:
+        path: /var/log/agileboot
+    pattern:
+        file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"
+
+agileboot:
+    auth:
+        use-lab-only: true
+    # 生产环境文件存储路径
+    file-base-dir: /opt/agileboot/files
+    api-prefix: ""
+    demo-enabled: false
+    # 生产环境暂时禁用RSA加密（前端兼容性问题）
+    rsa-enabled: true
+    traceRequestIdKey: Request-Id
+    rsaPrivateKey: MIICdQIBADANBgkqhkiG9w0BAQEFAASCAl8wggJbAgEAAoGBAKHoeQr6sIzfsUDMIdXK2FNzqnG+vnnUrTsJGF1f82MJ10cC5Aw53/ntHl+IjCBU0R8KwPVwjJLoDwhaPgO0ktHa3b0l6E+mqIVIniE20Nws3E0mJhFwJC/IxB7JAg8TkuNzflzvZjAO1ACwgkKGxq7Iutz4TocLeCfUkObXwc1fAgMBAAECgYAWwCzqDwnp8bDdkxGaEhPNvi4QJ6ZqRilFZ2TGEiqIGyTl9JEI6sT/QIOJFw3hqSltfDxbAMKwDe221b9rE9+hZhE2rrpwcTKuehob9Z8CObYeUHR9HG7Qb2tYRElvSCWo74iz2zajXAvJLjIE4MPuPYqXC5zOabH+EJ/eaOzVwQJBANmRkMlb+qzp1GWuqFMHP+5MeYhFwUHVX7fxKNA24oHldX8zjPIZ6d3vaRfliTvxOaz1T80acvJkkb7zHBmaW38CQQC+gfF8Lg+nvBY/S3wfOPL8FcntP16jdFhNNZmbOxq72ZmCfl5Zk5cYNBc4rDSrd9Sj4TkLLug+wrK6Wr117P4hAkBOVxnZR2NVy8SM8HzvmJauiZ7hMKzLtbcHlrBpeLnKqALM0JUZv7b0EPa4ghAOI2fvHU2kvrdRDGFmbkdZ+LilAkBnX8eT5MKl+A/yZJmDr7laRNB/poVKGNXZf55Md3P4Pwlnn/6+iLHSdmGrZPZnnOyLyKjVgqyPccLeEGMCXIlBAkAt2OMwss16OH2x79OcfBrabU5iCVbDHg56JYGbWP8KcPfvspxtL/4TdACRsa+yCMcI6L29Q4wn791SEEnE834a
+
+# Swagger配置 - 生产环境关闭
+springdoc:
+    swagger-ui:
+        enabled: false  # 生产环境关闭Swagger UI
+    api-docs:
+        enabled: false  # 生产环境关闭API文档
+
+# Token配置
+token:
+    header: Authorization
+    secret: ${JWT_SECRET:your_jwt_secret_key_here_should_be_very_long_and_secure}
+    autoRefreshTime: 20

@@ -140,6 +140,13 @@ public enum ErrorCode implements ErrorCodeInterface {
 
         DEPT_PARENT_DEPT_NO_EXIST_OR_DISABLED(10806, "该父级部门不存在或已停用", "Business.DEPT_PARENT_DEPT_NO_EXIST_OR_DISABLED"),
 
+
+        // ------------------------------- LAB ACHIEVEMENT CATEGORY ---------------------
+
+        CATEGORY_EXIST_ACHIEVEMENTS_NOT_ALLOW_DELETE(12801, "该类型存在成果，不允许删除", "Business.CATEGORY_EXIST_ACHIEVEMENTS_NOT_ALLOW_DELETE"),
+        CATEGORY_EXIST_CHILD_CATEGORY_NOT_ALLOW_DELETE(12802, "该类型存在下级类型，不允许删除", "Business.CATEGORY_EXIST_CHILD_CATEGORY_NOT_ALLOW_DELETE"),
+
+
         // -------------------------------  MENU -------------------------------------------------
 
         MENU_NAME_IS_NOT_UNIQUE(10901, "新增菜单:{} 失败，菜单名称已存在", "Business.MENU_NAME_IS_NOT_UNIQUE"),

@@ -50,6 +50,11 @@ public class UserApplicationService {
 
     private final UserModelFactory userModelFactory;
 
+    private final org.springframework.core.env.Environment environment;
+
+    // 注入 lab_user 服务用于lab-only模式时填充登录用户信息
+    private final com.agileboot.domain.lab.user.db.LabUserService labUserService;
+
 
     public PageDTO<UserDTO> getUserList(SearchUserQuery<SearchUserDO> query) {
         Page<SearchUserDO> userPage = userService.getUserList(query);
@@ -75,7 +80,17 @@ public class UserApplicationService {
     public CurrentLoginUserDTO getLoginUserInfo(SystemLoginUser loginUser) {
         CurrentLoginUserDTO permissionDTO = new CurrentLoginUserDTO();
 
-        permissionDTO.setUserInfo(new UserDTO(CacheCenter.userCache.getObjectById(loginUser.getUserId())));
+        boolean useLabOnly = cn.hutool.core.convert.Convert.toBool(
+            environment.getProperty("agileboot.auth.use-lab-only"), false);
+
+        if (useLabOnly) {
+            com.agileboot.domain.lab.user.db.LabUserEntity lab = labUserService.getById(loginUser.getUserId());
+            permissionDTO.setUserInfo(com.agileboot.domain.lab.user.dto.LabLoginUserDTO.from(lab));
+        } else {
+            // 原 sys_user 路径
+            SysUserEntity sys = CacheCenter.userCache.getObjectById(loginUser.getUserId());
+            permissionDTO.setUserInfo(new UserDTO(sys));
+        }
         permissionDTO.setRoleKey(loginUser.getRoleInfo().getRoleKey());
         permissionDTO.setPermissions(loginUser.getRoleInfo().getMenuPermissions());
 

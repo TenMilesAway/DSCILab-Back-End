@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 /**
  * 实验室用户Service实现类
  *
@@ -55,6 +57,40 @@ public class LabUserServiceImpl extends ServiceImpl<LabUserMapper, LabUserEntity
     @Override
     public int hardDeleteById(Long id) {
         return baseMapper.hardDeleteById(id);
+    }
+
+    @Override
+    public LabUserEntity getUniqueByRealName(String realName) {
+        if (realName == null || realName.trim().isEmpty()) return null;
+        LambdaQueryWrapper<LabUserEntity> q = new LambdaQueryWrapper<>();
+        q.eq(LabUserEntity::getRealName, realName.trim());
+        List<LabUserEntity> list = this.list(q);
+        return list != null && list.size() == 1 ? list.get(0) : null;
+    }
+
+    @Override
+    public LabUserEntity getUniqueByEnglishName(String englishName) {
+        if (englishName == null || englishName.trim().isEmpty()) return null;
+        LambdaQueryWrapper<LabUserEntity> q = new LambdaQueryWrapper<>();
+        q.eq(LabUserEntity::getEnglishName, englishName.trim());
+        List<LabUserEntity> list = this.list(q);
+        return list != null && list.size() == 1 ? list.get(0) : null;
+    }
+
+    @Override
+    public LabUserEntity findBestByRealName(String realName) {
+        if (realName == null || realName.trim().isEmpty()) {
+            return null;
+        }
+        return baseMapper.selectFirstByRealName(realName.trim());
+    }
+
+    @Override
+    public LabUserEntity findBestByEnglishName(String englishName) {
+        if (englishName == null || englishName.trim().isEmpty()) {
+            return null;
+        }
+        return baseMapper.selectFirstByEnglishName(englishName.trim());
     }
 
 }

@@ -42,6 +42,7 @@ public class OpenLabController extends BaseController {
             @Parameter(description = "每页大小", example = "100") @RequestParam(defaultValue = "1000") int pageSize,
             @Parameter(description = "身份：1=管理员,2=教师,3=学生") @RequestParam(required = false) Integer identity,
             @Parameter(description = "学术身份：1..5") @RequestParam(required = false) Integer academicStatus,
+            @Parameter(description = "状态：1=在读/在职,2=毕业/离职") @RequestParam(required = false) Integer status,
             @Parameter(description = "关键词（姓名/英文名/研究方向）") @RequestParam(required = false) String keyword
     ) {
         LambdaQueryWrapper<LabUserEntity> qw = new LambdaQueryWrapper<>();
@@ -49,21 +50,27 @@ public class OpenLabController extends BaseController {
           .eq(LabUserEntity::getDeleted, false)
           .select(
               LabUserEntity::getId,
+              LabUserEntity::getStudentNumber,
               LabUserEntity::getRealName,
               LabUserEntity::getEnglishName,
+              LabUserEntity::getGender,
               LabUserEntity::getIdentity,
               LabUserEntity::getAcademicStatus,
               LabUserEntity::getResearchArea,
+              LabUserEntity::getPhone,
+              LabUserEntity::getStatus,
               LabUserEntity::getEnrollmentYear,
               LabUserEntity::getGraduationYear,
               LabUserEntity::getGraduationDest,
               LabUserEntity::getPhoto,
+              LabUserEntity::getResume,
               LabUserEntity::getHomepageUrl,
               LabUserEntity::getEmail,
               LabUserEntity::getOrcid
           );
         if (identity != null) qw.eq(LabUserEntity::getIdentity, identity);
         if (academicStatus != null) qw.eq(LabUserEntity::getAcademicStatus, academicStatus);
+        if (status != null) qw.eq(LabUserEntity::getStatus, status);
         if (keyword != null && !keyword.trim().isEmpty()) {
             qw.and(w -> w.like(LabUserEntity::getRealName, keyword)
                          .or().like(LabUserEntity::getEnglishName, keyword)
@@ -99,5 +106,7 @@ public class OpenLabController extends BaseController {
                 .cacheControl(CacheControl.maxAge(60, TimeUnit.SECONDS).cachePublic())
                 .body(body);
     }
+
+
 }
 
