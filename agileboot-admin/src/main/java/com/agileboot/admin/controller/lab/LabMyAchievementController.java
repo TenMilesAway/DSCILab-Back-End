@@ -9,7 +9,6 @@ import com.agileboot.common.exception.error.ErrorCode;
 import com.agileboot.domain.lab.achievement.LabAchievementApplicationService;
 import com.agileboot.domain.lab.achievement.dto.LabAchievementDTO;
 import com.agileboot.domain.lab.achievement.query.MyAchievementQuery;
-import com.agileboot.domain.lab.paper.author.LabPaperAuthorService;
 import org.springframework.transaction.annotation.Transactional;
 import com.agileboot.domain.lab.user.LabUserPermissionChecker;
 import com.agileboot.domain.lab.user.db.LabUserEntity;
@@ -35,7 +34,6 @@ public class LabMyAchievementController extends BaseController {
 
     private final LabAchievementApplicationService achievementApplicationService;
     private final LabUserPermissionChecker labUserPermission;
-    private final LabPaperAuthorService authorService;
 
     private LabUserEntity getCurrentLabUser() {
         LabUserEntity current = labUserPermission.getCurrentLabUser();
@@ -76,21 +74,11 @@ public class LabMyAchievementController extends BaseController {
     @Transactional(rollbackFor = Exception.class)
     public ResponseDTO<Boolean> toggleVisibility(
         @Parameter(description = "成果ID", required = true) @PathVariable Long achievementId,
-        @Parameter(description = "是否可见", required = true) @RequestParam Boolean visible) {
-        System.out.println("DEBUG: Controller收到切换可见性请求 - achievementId=" + achievementId + ", visible=" + visible);
+        @Parameter(description = "是否可见", required = true) @RequestParam Boolean visible,
+        @Parameter(description = "成果类型: paper/project", required = true) @RequestParam String type) {
         LabUserEntity current = getCurrentLabUser();
-        System.out.println("DEBUG: 当前用户ID=" + (current != null ? current.getId() : "null"));
-
-        // 防止重复调用：先检查当前状态
-        com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity currentRecord =
-            authorService.getAuthorRecord(achievementId, current.getId());
-        if (currentRecord != null && Boolean.TRUE.equals(visible) == Boolean.TRUE.equals(currentRecord.getVisible())) {
-            System.out.println("DEBUG: 状态未改变，跳过更新 - 当前=" + currentRecord.getVisible() + ", 目标=" + visible);
-            return ResponseDTO.ok(currentRecord.getVisible());
-        }
-
-        Boolean actualVisible = achievementApplicationService.toggleMyVisibilityInAchievement(achievementId, visible, current.getId());
-        System.out.println("DEBUG: 切换可见性完成，实际状态=" + actualVisible);
+        Boolean actualVisible = achievementApplicationService
+            .toggleMyVisibilityInAchievement(achievementId, visible, current.getId(), type);
         return ResponseDTO.ok(actualVisible);
     }
 

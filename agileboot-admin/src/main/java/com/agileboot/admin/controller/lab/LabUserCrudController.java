@@ -1,5 +1,6 @@
 package com.agileboot.admin.controller.lab;
 
+import com.agileboot.admin.customize.aop.accessLog.AccessLog;
 import com.agileboot.common.core.base.BaseController;
 import com.agileboot.common.core.dto.ResponseDTO;
 import com.agileboot.common.core.page.PageDTO;
@@ -10,6 +11,7 @@ import com.agileboot.domain.lab.user.query.LabUserQuery;
 import com.agileboot.common.constant.Constants.UploadSubDir;
 import com.agileboot.common.utils.file.FileUploadUtils;
 import com.agileboot.domain.common.dto.UploadFileDTO;
+import com.agileboot.common.enums.common.BusinessTypeEnum;
 import com.agileboot.common.exception.ApiException;
 import com.agileboot.common.exception.error.ErrorCode;
 import org.springframework.web.multipart.MultipartFile;
@@ -218,13 +220,20 @@ public class LabUserCrudController extends BaseController {
      */
     @Operation(summary = "上传用户头像", description = "用户上传个人头像")
     @PostMapping("/profile/photo")
-    public ResponseDTO<UploadFileDTO> uploadPhoto(@RequestParam("photofile") MultipartFile file) {
-        if (file.isEmpty()) {
+    public ResponseDTO<UploadFileDTO> uploadPhoto(
+            @RequestParam(value = "photofile", required = false) MultipartFile photofile,
+            @RequestParam(value = "avatarfile", required = false) MultipartFile avatarfile,
+            @RequestParam(value = "file", required = false) MultipartFile file) {
+        MultipartFile actualFile = photofile != null ? photofile : avatarfile;
+        if (actualFile == null) {
+            actualFile = file;
+        }
+        if (actualFile == null || actualFile.isEmpty()) {
             throw new ApiException(ErrorCode.Business.USER_UPLOAD_FILE_FAILED);
         }
 
         // 上传文件到头像目录
-        String photoUrl = FileUploadUtils.upload(UploadSubDir.AVATAR_PATH, file);
+        String photoUrl = FileUploadUtils.upload(UploadSubDir.AVATAR_PATH, actualFile);
 
         // 仅更新当前用户的头像，不影响其他字段
         labUserCrudApplicationService.updateProfilePhoto(photoUrl);
@@ -236,17 +245,24 @@ public class LabUserCrudController extends BaseController {
      * 管理员为指定用户上传头像
      */
     @Operation(summary = "管理员上传用户头像", description = "管理员为指定用户上传头像")
-    @PreAuthorize("@permission.has('lab:user:edit') OR @labUserPermission.isAdmin()")
+    @PreAuthorize("@labUserPermission.isAdmin()")
+    @AccessLog(title = "Lab User Photo", businessType = BusinessTypeEnum.MODIFY)
     @PostMapping("/{userId}/photo")
     public ResponseDTO<UploadFileDTO> uploadUserPhoto(
             @Parameter(description = "用户ID") @PathVariable Long userId,
-            @RequestParam("photofile") MultipartFile file) {
-        if (file.isEmpty()) {
+            @RequestParam(value = "photofile", required = false) MultipartFile photofile,
+            @RequestParam(value = "avatarfile", required = false) MultipartFile avatarfile,
+            @RequestParam(value = "file", required = false) MultipartFile file) {
+        MultipartFile actualFile = photofile != null ? photofile : avatarfile;
+        if (actualFile == null) {
+            actualFile = file;
+        }
+        if (actualFile == null || actualFile.isEmpty()) {
             throw new ApiException(ErrorCode.Business.USER_UPLOAD_FILE_FAILED);
         }
 
         // 上传文件到头像目录
-        String photoUrl = FileUploadUtils.upload(UploadSubDir.AVATAR_PATH, file);
+        String photoUrl = FileUploadUtils.upload(UploadSubDir.AVATAR_PATH, actualFile);
 
         // 更新指定用户的头像（直接更新，避免验证其他必填字段）
         labUserCrudApplicationService.updateUserPhoto(userId, photoUrl);

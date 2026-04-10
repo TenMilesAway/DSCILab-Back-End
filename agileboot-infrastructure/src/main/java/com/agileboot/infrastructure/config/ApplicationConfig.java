@@ -19,6 +19,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
     value = {
         "com.agileboot.**.db",
         "com.agileboot.domain.lab.paper.author",
+        "com.agileboot.domain.lab.event.author",
         "com.agileboot.domain.lab.project.author",
         "com.agileboot.domain.lab.project.relation"
     },

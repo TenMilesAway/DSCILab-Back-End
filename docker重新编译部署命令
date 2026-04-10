@@ -1,0 +1,59 @@
+DSCILab-Back-End 本地编译与 Docker 部署教程（Windows PowerShell）
+
+一、前置条件
+1) 已安装 Java 8（建议与容器一致：Temurin/OpenJDK 8）
+2) 已安装 Docker Desktop（含 docker compose）
+3) 在项目根目录执行命令：d:\GitRepository\DSCILab-Back-End
+
+二、本地编译（先确认 Java 构建链路可用）
+cd d:\GitRepository\DSCILab-Back-End
+java -version
+.\mvnw.cmd -v
+.\mvnw.cmd clean package -DskipTests
+
+说明：
+- 如果出现 JAVA_HOME 未配置，请先设置 JAVA_HOME 后重试。
+- 打包成功后，会在 agileboot-admin\target 下产出 jar 包，供 Docker 多阶段构建复制。
+
+三、构建后端镜像
+cd d:\GitRepository\DSCILab-Back-End
+docker build -f Dockerfile.backend -t agileboot-backend:v1 .
+
+可选验证镜像内 Java 版本：
+docker run --rm --entrypoint java agileboot-backend:v1 -version
+
+四、Compose 部署（MySQL + Redis + Backend）
+cd d:\GitRepository\DSCILab-Back-End
+docker compose up -d
+docker compose ps
+docker compose logs agileboot-backend --tail 80
+
+五、验收标准
+1) docker compose ps 中：
+	- agileboot-mysql 为 healthy
+	- agileboot-redis 为 healthy
+	- agileboot-backend 为 Up
+2) 后端日志无持续报错（尤其是 Bean 创建失败、数据库连接失败）
+
+六、常用运维命令
+# 持续查看后端日志
+docker compose logs -f agileboot-backend
+
+# 仅重启后端
+docker compose restart agileboot-backend
+
+# 停止并移除容器（不删镜像）
+docker compose down
+
+# 停止并移除容器 + 网络 + 匿名卷
+docker compose down -v
+
+七、常见问题
+1) 问题：JAVA_HOME not found
+	处理：安装 JDK 并设置 JAVA_HOME，再重新打开终端执行 .\mvnw.cmd。
+
+2) 问题：后端启动时报数据库连接失败（Connection refused）
+	处理：先确认 agileboot-mysql 为 healthy，再检查 docker-compose.yml 中数据库地址、端口和密码配置。
+
+3) 问题：改了代码但容器内未生效
+	处理：重新执行镜像构建命令后再 docker compose up -d。

@@ -21,4 +21,9 @@ public interface LabAchievementService extends IService<LabAchievementEntity> {
      * 检查用户是否拥有该成果
      */
     boolean isOwner(Long achievementId, Long userId);
+
+    /**
+     * 以主键同步成果快照，允许覆盖软删除记录。
+     */
+    void upsertSnapshot(LabAchievementEntity entity);
 }

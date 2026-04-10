@@ -6,6 +6,7 @@ import cn.hutool.json.JSONUtil;
 import com.agileboot.common.core.page.PageDTO;
 import com.agileboot.common.exception.ApiException;
 import com.agileboot.common.exception.error.ErrorCode;
+import com.agileboot.domain.lab.achievement.db.LabAchievementService;
 import com.agileboot.domain.lab.achievement.db.LabAchievementEntity;
 import com.agileboot.domain.lab.category.CategoryCompatibilityService;
 import com.agileboot.domain.lab.category.db.LabAchievementCategoryEntity;
@@ -50,6 +51,7 @@ public class LabProjectApplicationService {
     private final LabAchievementCategoryService categoryService;
     private final LabProjectPaperRelService projectPaperRelService;
     private final LabPaperService paperService;
+    private final LabAchievementService achievementService;
 
     public PageDTO<LabProjectDTO> getProjectList(LabProjectQuery query) {
         QueryWrapper<LabProjectEntity> wrapper = query.addQueryCondition();
@@ -93,6 +95,7 @@ public class LabProjectApplicationService {
         entity.setCreateTime(new java.util.Date());
         entity.setUpdateTime(new java.util.Date());
         projectService.save(entity);
+        syncAchievementFromProject(entity);
         Long projectId = entity.getId();
         saveProjectAuthors(projectId, command.getAuthors(), command.getMemberIds(), ownerUserId);
         return projectId;
@@ -110,6 +113,7 @@ public class LabProjectApplicationService {
         fillEntity(entity, command, entity.getOwnerUserId());
         entity.setUpdateTime(new java.util.Date());
         projectService.updateById(entity);
+        syncAchievementFromProject(entity);
         saveProjectAuthors(projectId, command.getAuthors(), command.getMemberIds(), operatorId);
     }
 
@@ -123,6 +127,11 @@ public class LabProjectApplicationService {
             throw new ApiException(ErrorCode.Business.PERMISSION_NOT_ALLOWED_TO_OPERATE);
         }
         projectService.removeById(projectId);
+        // removeById 是逻辑删除，entity 本身不会自动更新 deleted 状态，
+        // 这里显式标记后再同步，避免总表残留 deleted=0。
+        entity.setDeleted(true);
+        entity.setUpdateTime(new java.util.Date());
+        syncAchievementFromProject(entity);
         projectPaperRelService.hardDeleteByProjectId(projectId);
     }
 
@@ -135,6 +144,7 @@ public class LabProjectApplicationService {
         entity.setPublished(Boolean.TRUE.equals(published));
         entity.setUpdateTime(new java.util.Date());
         projectService.updateById(entity);
+        syncAchievementFromProject(entity);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -146,6 +156,54 @@ public class LabProjectApplicationService {
         entity.setIsVerified(Boolean.TRUE.equals(verified));
         entity.setUpdateTime(new java.util.Date());
         projectService.updateById(entity);
+        syncAchievementFromProject(entity);
+    }
+
+    private void syncAchievementFromProject(LabProjectEntity project) {
+        if (project == null || project.getId() == null) {
+            return;
+        }
+        LabAchievementEntity achievement = achievementService.getById(project.getId());
+        if (achievement == null) {
+            achievement = new LabAchievementEntity();
+            achievement.setId(project.getId());
+            copyProjectToAchievement(project, achievement);
+            achievementService.upsertSnapshot(achievement);
+            return;
+        }
+        copyProjectToAchievement(project, achievement);
+        achievementService.upsertSnapshot(achievement);
+    }
+
+    private void copyProjectToAchievement(LabProjectEntity project, LabAchievementEntity achievement) {
+        achievement.setTitle(project.getTitle());
+        achievement.setTitleEn(project.getTitleEn());
+        achievement.setDescription(project.getDescription());
+        achievement.setKeywords(project.getKeywords());
+        achievement.setType(2);
+        achievement.setPaperType(null);
+        achievement.setProjectType(project.getProjectTypeId());
+        achievement.setCategoryId(project.getCategoryId());
+        achievement.setVenue(null);
+        achievement.setPublishDate(null);
+        achievement.setProjectStartDate(project.getProjectStartDate());
+        achievement.setProjectEndDate(project.getProjectEndDate());
+        achievement.setReference(project.getReference());
+        achievement.setLinkUrl(project.getLinkUrl());
+        achievement.setGitUrl(project.getGitUrl());
+        achievement.setHomepageUrl(project.getHomepageUrl());
+        achievement.setPdfUrl(project.getPdfUrl());
+        achievement.setDoi(null);
+        achievement.setFundingAmount(project.getFundingAmount());
+        achievement.setOwnerUserId(project.getOwnerUserId());
+        achievement.setPublished(project.getPublished());
+        achievement.setIsVerified(project.getIsVerified());
+        achievement.setExtra(project.getExtra());
+        achievement.setDeleted(Boolean.TRUE.equals(project.getDeleted()));
+        achievement.setCreatorId(project.getCreatorId());
+        achievement.setUpdaterId(project.getUpdaterId());
+        achievement.setCreateTime(project.getCreateTime());
+        achievement.setUpdateTime(project.getUpdateTime());
     }
 
     private void fillEntity(LabProjectEntity entity, CreateProjectCommand command, Long ownerUserId) {

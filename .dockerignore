@@ -19,3 +19,10 @@ tests/**/coverage/
 *.njsproj
 *.sln
 tsconfig.tsbuildinfo
+
+# Backend build artifacts and runtime data
+**/target/
+**/log.path_IS_UNDEFINED/
+docker/mysql-data/
+docker/mysql-data/**
+*.sock

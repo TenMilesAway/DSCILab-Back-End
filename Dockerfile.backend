@@ -1,0 +1,52 @@
+# ========== 第一阶段：编译构建环境 (Builder) ==========
+# 使用官方 Maven 镜像，它里面已经装好了 JDK 8 和 Maven
+FROM maven:3.8.6-eclipse-temurin-8 AS builder
+
+# 设置工作目录
+WORKDIR /app
+
+# Maven 下载稳定性配置：使用镜像仓库并增加重试，降低网络抖动导致的构建失败
+RUN mkdir -p /root/.m2 && \
+		cat > /root/.m2/settings.xml <<'EOF'
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+					xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+					xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd">
+	<mirrors>
+		<mirror>
+			<id>aliyun-central</id>
+			<name>Aliyun Maven Central Mirror</name>
+			<url>https://maven.aliyun.com/repository/central</url>
+			<mirrorOf>central</mirrorOf>
+		</mirror>
+	</mirrors>
+</settings>
+EOF
+
+# 拷贝完整源码并执行打包
+COPY . .
+
+RUN mvn -B -U -s /root/.m2/settings.xml \
+		-Dmaven.wagon.http.retryHandler.count=5 \
+		-Dmaven.wagon.http.retryHandler.requestSentEnabled=true \
+		-Dmaven.wagon.httpconnectionManager.ttlSeconds=120 \
+		-Dmaven.test.skip=true \
+		-Dfile.encoding=UTF-8 \
+		clean package
+
+# ========== 第二阶段：运行环境 (Runner) ==========
+# 使用轻量级的 JRE 8 镜像
+FROM eclipse-temurin:8-jre
+
+# 设置工作目录
+WORKDIR /app
+
+# 从第一阶段 (builder) 中，把编译好的 jar 包拷贝过来
+# 注意：根据你的项目结构，编译后的 jar 包位于 agileboot-admin/target/ 下
+COPY --from=builder /app/agileboot-admin/target/agileboot-admin-*.jar app.jar
+
+# 暴露端口
+EXPOSE 8080
+
+# 启动命令
+# 同时启用 basic 和 dev，避免覆盖 application.yml 中的基础配置（如 i18n basename）
+ENTRYPOINT ["java", "-jar", "app.jar", "--spring.profiles.active=basic,dev"]
