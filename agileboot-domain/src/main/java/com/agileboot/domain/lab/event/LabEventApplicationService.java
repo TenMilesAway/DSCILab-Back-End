@@ -12,12 +12,14 @@ import com.agileboot.domain.lab.event.db.LabEventEntity;
 import com.agileboot.domain.lab.event.db.LabEventService;
 import com.agileboot.domain.lab.event.dto.LabEventAuthorDTO;
 import com.agileboot.domain.lab.event.dto.LabEventDTO;
+import com.agileboot.domain.lab.event.dto.LabEventListDTO;
 import com.agileboot.domain.lab.event.query.LabEventQuery;
 import com.agileboot.domain.lab.user.db.LabUserEntity;
 import com.agileboot.domain.lab.user.db.LabUserService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,30 +28,39 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class LabEventApplicationService {
+
+    private static final int MAX_CONTENT_LENGTH = 50000;
+    private static final int MAX_IMAGE_COUNT = 20;
+    private static final Pattern IMG_SRC_PATTERN = Pattern.compile(
+        "<img\\b[^>]*\\bsrc\\s*=\\s*['\\\"]([^'\\\"]+)['\\\"][^>]*>", Pattern.CASE_INSENSITIVE);
+    private static final Pattern EVENT_HANDLER_PATTERN = Pattern.compile("\\son[a-z]+\\s*=", Pattern.CASE_INSENSITIVE);
 
     private final LabEventService eventService;
     private final LabEventAuthorService eventAuthorService;
     private final LabUserService labUserService;
 
-    public PageDTO<LabEventDTO> getEventList(LabEventQuery query) {
+    public PageDTO<LabEventListDTO> getEventList(LabEventQuery query) {
         QueryWrapper<LabEventEntity> wrapper = query.addQueryCondition();
         IPage<LabEventEntity> page = eventService.page(query.toPage(), wrapper);
         return buildEventPage(page);
     }
 
-    public PageDTO<LabEventDTO> getMyEventList(LabEventQuery query, Long currentUserId) {
+    public PageDTO<LabEventListDTO> getMyEventList(LabEventQuery query, Long currentUserId) {
         QueryWrapper<LabEventEntity> wrapper = query.addQueryCondition();
         applyEventAccessFilter(wrapper, currentUserId);
         IPage<LabEventEntity> page = eventService.page(query.toPage(), wrapper);
         return buildEventPage(page);
     }
 
-    public PageDTO<LabEventDTO> getPublicEventList(LabEventQuery query) {
+    public PageDTO<LabEventListDTO> getPublicEventList(LabEventQuery query) {
         query.setPublished(true);
         return getEventList(query);
     }
@@ -72,6 +83,8 @@ public class LabEventApplicationService {
         entity.setUpdateTime(new java.util.Date());
         eventService.save(entity);
         saveEventAuthors(entity.getId(), command.getAuthors(), ownerUserId);
+        log.info("event-create id={} title={} contentLength={}", entity.getId(), entity.getTitle(),
+            safeLength(command.getContent()));
         return entity.getId();
     }
 
@@ -85,6 +98,8 @@ public class LabEventApplicationService {
         entity.setUpdateTime(new java.util.Date());
         eventService.updateById(entity);
         saveEventAuthors(eventId, command.getAuthors(), operatorId);
+        log.info("event-update id={} title={} contentLength={}", eventId, command.getTitle(),
+            safeLength(command.getContent()));
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -108,6 +123,7 @@ public class LabEventApplicationService {
     }
 
     private void fillEntity(LabEventEntity entity, CreateEventCommand command, Long ownerUserId) {
+        validateRichContent(command.getContent());
         entity.setTitle(command.getTitle());
         entity.setSummary(command.getSummary());
         entity.setEventTime(command.getEventTime() == null ? LocalDate.now() : command.getEventTime());
@@ -216,11 +232,10 @@ public class LabEventApplicationService {
         dtoList.forEach(dto -> dto.setAuthors(authorMap.getOrDefault(dto.getId(), Collections.emptyList())));
     }
 
-    private PageDTO<LabEventDTO> buildEventPage(IPage<LabEventEntity> page) {
-        List<LabEventDTO> list = page.getRecords().stream()
-            .map(LabEventDTO::fromEntity)
+    private PageDTO<LabEventListDTO> buildEventPage(IPage<LabEventEntity> page) {
+        List<LabEventListDTO> list = page.getRecords().stream()
+            .map(LabEventListDTO::fromEntity)
             .collect(Collectors.toList());
-        fillAuthors(list);
         return new PageDTO<>(list, page.getTotal());
     }
 
@@ -243,6 +258,61 @@ public class LabEventApplicationService {
             wrapper.and(w -> w.eq("owner_user_id", currentUserId)
                 .or()
                 .in("id", participantEventIds));
+        }
+    }
+
+    private int safeLength(String content) {
+        return content == null ? 0 : content.length();
+    }
+
+    private void validateRichContent(String content) {
+        if (StrUtil.isBlank(content)) {
+            return;
+        }
+        if (content.length() > MAX_CONTENT_LENGTH) {
+            throw new ApiException(ErrorCode.Client.COMMON_REQUEST_PARAMETERS_INVALID,
+                "content长度不能超过" + MAX_CONTENT_LENGTH);
+        }
+        String lower = content.toLowerCase();
+        if (lower.contains("data:image/")) {
+            throw new ApiException(ErrorCode.Client.COMMON_REQUEST_PARAMETERS_INVALID,
+                "content中禁止使用base64图片，请先上传后引用URL");
+        }
+        if (lower.contains("<script") || lower.contains("javascript:")) {
+            throw new ApiException(ErrorCode.Client.COMMON_REQUEST_PARAMETERS_INVALID,
+                "content包含不安全脚本内容");
+        }
+        if (EVENT_HANDLER_PATTERN.matcher(content).find()) {
+            throw new ApiException(ErrorCode.Client.COMMON_REQUEST_PARAMETERS_INVALID,
+                "content包含不安全事件属性");
+        }
+        if (lower.contains("<iframe") || lower.contains("<object") || lower.contains("<embed")) {
+            throw new ApiException(ErrorCode.Client.COMMON_REQUEST_PARAMETERS_INVALID,
+                "content包含不安全标签");
+        }
+
+        Matcher matcher = IMG_SRC_PATTERN.matcher(content);
+        int imgCount = 0;
+        while (matcher.find()) {
+            imgCount++;
+            if (imgCount > MAX_IMAGE_COUNT) {
+                throw new ApiException(ErrorCode.Client.COMMON_REQUEST_PARAMETERS_INVALID,
+                    "content图片数量不能超过" + MAX_IMAGE_COUNT);
+            }
+            String src = StrUtil.trim(matcher.group(1));
+            if (StrUtil.isBlank(src)) {
+                throw new ApiException(ErrorCode.Client.COMMON_REQUEST_PARAMETERS_INVALID,
+                    "content中存在空图片地址");
+            }
+            String srcLower = src.toLowerCase();
+            if (!(srcLower.startsWith("http://") || srcLower.startsWith("https://") || srcLower.startsWith("/"))) {
+                throw new ApiException(ErrorCode.Client.COMMON_REQUEST_PARAMETERS_INVALID,
+                    "content图片地址仅支持http/https或站内相对路径");
+            }
+            if (srcLower.startsWith("data:")) {
+                throw new ApiException(ErrorCode.Client.COMMON_REQUEST_PARAMETERS_INVALID,
+                    "content中禁止使用data协议图片");
+            }
         }
     }
 }

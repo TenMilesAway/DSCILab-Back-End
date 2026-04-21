@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: com.agileboot.common.query.AbstractQueryTest
 -------------------------------------------------------------------------------
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.041 s - in com.agileboot.common.query.AbstractQueryTest
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.047 s - in com.agileboot.common.query.AbstractQueryTest

@@ -10,6 +10,7 @@ import com.agileboot.domain.lab.event.LabEventApplicationService;
 import com.agileboot.domain.lab.event.command.CreateEventCommand;
 import com.agileboot.domain.lab.event.command.UpdateEventCommand;
 import com.agileboot.domain.lab.event.dto.LabEventDTO;
+import com.agileboot.domain.lab.event.dto.LabEventListDTO;
 import com.agileboot.domain.lab.event.query.LabEventQuery;
 import com.agileboot.domain.lab.user.LabUserPermissionChecker;
 import com.agileboot.domain.lab.user.db.LabUserEntity;
@@ -50,7 +51,7 @@ public class LabEventController extends BaseController {
     @GetMapping
     @PreAuthorize("@permission.has('lab:event:query') or isAuthenticated()")
     @AccessLog(title = "活动管理")
-    public ResponseDTO<PageDTO<LabEventDTO>> list(@Parameter(description = "查询条件") LabEventQuery query) {
+    public ResponseDTO<PageDTO<LabEventListDTO>> list(@Parameter(description = "查询条件") LabEventQuery query) {
         if (labUserPermission.isAdmin()) {
             return ResponseDTO.ok(eventApplicationService.getEventList(query));
         }
@@ -74,7 +75,7 @@ public class LabEventController extends BaseController {
     @Operation(summary = "创建活动")
     @PostMapping
     @PreAuthorize("@permission.has('lab:event:add') or isAuthenticated()")
-    @AccessLog(title = "活动管理")
+    @AccessLog(title = "活动管理", isSaveRequestData = false)
     public ResponseDTO<Long> create(@Validated @RequestBody CreateEventCommand command) {
         Long ownerId = getCurrentLabUserId();
         Long id = eventApplicationService.createEvent(command, ownerId);
@@ -84,7 +85,7 @@ public class LabEventController extends BaseController {
     @Operation(summary = "更新活动")
     @PutMapping("/{id}")
     @PreAuthorize("@permission.has('lab:event:edit') or isAuthenticated()")
-    @AccessLog(title = "活动管理")
+    @AccessLog(title = "活动管理", isSaveRequestData = false)
     public ResponseDTO<Void> update(@PathVariable Long id, @Validated @RequestBody UpdateEventCommand command) {
         eventApplicationService.updateEvent(id, command, getCurrentLabUserId(), labUserPermission.isAdmin());
         return ResponseDTO.ok();

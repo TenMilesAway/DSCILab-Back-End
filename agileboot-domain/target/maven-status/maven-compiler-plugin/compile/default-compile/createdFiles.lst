@@ -44,11 +44,13 @@ com\agileboot\domain\system\post\PostApplicationService.class
 com\agileboot\domain\lab\achievement\service\AchievementCategoryService.class
 com\agileboot\domain\system\monitor\dto\CpuInfo.class
 com\agileboot\domain\lab\achievement\db\LabAchievementService.class
+com\agileboot\domain\lab\event\dto\PublicEventDetailDTO.class
 com\agileboot\domain\lab\relationship\command\CreateUserRelationshipCommand.class
 com\agileboot\domain\lab\category\dto\LabAchievementCategoryDTO.class
 com\agileboot\domain\lab\relationship\db\LabUserRelationshipEntity$Status.class
 com\agileboot\domain\lab\project\command\UpdateProjectCommand.class
 com\agileboot\domain\system\user\db\SearchUserDO.class
+com\agileboot\domain\lab\event\dto\PublicEventListDTO.class
 com\agileboot\domain\lab\fund\db\LabFundPaperRelServiceImpl.class
 com\agileboot\domain\system\role\db\SysRoleMenuService.class
 com\agileboot\domain\lab\category\db\LabAchievementCategoryMapper.class
@@ -174,6 +176,7 @@ com\agileboot\domain\system\dept\query\DeptQuery.class
 com\agileboot\domain\system\notice\model\NoticeModel.class
 com\agileboot\domain\lab\event\db\LabEventService.class
 com\agileboot\domain\system\menu\command\UpdateMenuCommand.class
+com\agileboot\domain\lab\event\dto\LabEventListDTO.class
 com\agileboot\domain\system\role\db\SysRoleMenuServiceImpl.class
 com\agileboot\domain\lab\achievement\command\AddAuthorCommand.class
 com\agileboot\domain\system\user\db\SysUserEntity.class

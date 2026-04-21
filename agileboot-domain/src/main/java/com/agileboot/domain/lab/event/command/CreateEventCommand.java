@@ -24,11 +24,12 @@ public class CreateEventCommand {
     @Size(max = 1000, message = "活动摘要长度不能超过1000个字符")
     private String summary;
 
-    @Schema(description = "活动日期（默认当天）")
+    @Schema(description = "活动时间（默认当前时间）")
     private LocalDate eventTime;
 
     @Schema(description = "活动内容（富文本）")
     @JsonDeserialize(using = StringDeserializer.class)
+    @Size(max = 50000, message = "content长度不能超过50000个字符")
     private String content;
 
     @Size(max = 100, message = "标签长度不能超过100个字符")

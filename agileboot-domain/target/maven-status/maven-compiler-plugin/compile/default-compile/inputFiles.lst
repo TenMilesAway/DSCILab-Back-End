@@ -176,9 +176,12 @@ D:\GitRepository\DSCILab-Back-End\agileboot-domain\src\main\java\com\agileboot\d
 D:\GitRepository\DSCILab-Back-End\agileboot-domain\src\main\java\com\agileboot\domain\lab\relationship\dto\UserRelationshipDTO.java
 D:\GitRepository\DSCILab-Back-End\agileboot-domain\src\main\java\com\agileboot\domain\system\menu\db\SysMenuService.java
 D:\GitRepository\DSCILab-Back-End\agileboot-domain\src\main\java\com\agileboot\domain\system\user\db\SysUserEntity.java
+D:\GitRepository\DSCILab-Back-End\agileboot-domain\src\main\java\com\agileboot\domain\lab\event\dto\PublicEventListDTO.java
 D:\GitRepository\DSCILab-Back-End\agileboot-domain\src\main\java\com\agileboot\domain\system\monitor\dto\CpuInfo.java
 D:\GitRepository\DSCILab-Back-End\agileboot-domain\src\main\java\com\agileboot\domain\system\notice\dto\NoticeDTO.java
+D:\GitRepository\DSCILab-Back-End\agileboot-domain\src\main\java\com\agileboot\domain\lab\event\dto\LabEventListDTO.java
 D:\GitRepository\DSCILab-Back-End\agileboot-domain\src\main\java\com\agileboot\domain\system\post\db\SysPostService.java
+D:\GitRepository\DSCILab-Back-End\agileboot-domain\src\main\java\com\agileboot\domain\lab\event\dto\PublicEventDetailDTO.java
 D:\GitRepository\DSCILab-Back-End\agileboot-domain\src\main\java\com\agileboot\domain\system\menu\dto\RouterDTO.java
 D:\GitRepository\DSCILab-Back-End\agileboot-domain\src\main\java\com\agileboot\domain\lab\paper\dto\LabPaperAuthorDTO.java
 D:\GitRepository\DSCILab-Back-End\agileboot-domain\src\main\java\com\agileboot\domain\system\monitor\dto\DiskInfo.java

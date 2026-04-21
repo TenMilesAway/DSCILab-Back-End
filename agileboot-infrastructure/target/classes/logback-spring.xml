@@ -19,11 +19,12 @@
   <appender name="info_log" class="ch.qos.logback.core.rolling.RollingFileAppender">
     <file>${log.path}/sys-info.log</file>
     <!-- 循环政策：基于时间创建日志文件 -->
-    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+    <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
       <!-- 日志文件名格式 -->
-      <fileNamePattern>${log.path}/sys-info.%d{yyyy-MM-dd}.log</fileNamePattern>
-      <!-- 日志最大的历史 60天 -->
-      <maxHistory>60</maxHistory>
+      <fileNamePattern>${log.path}/sys-info.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+      <maxFileSize>50MB</maxFileSize>
+      <maxHistory>30</maxHistory>
+      <totalSizeCap>3GB</totalSizeCap>
     </rollingPolicy>
     <encoder>
       <pattern>${log.pattern}</pattern>
@@ -41,11 +42,12 @@
   <appender name="error_log" class="ch.qos.logback.core.rolling.RollingFileAppender">
     <file>${log.path}/sys-error.log</file>
     <!-- 循环政策：基于时间创建日志文件 -->
-    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+    <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
       <!-- 日志文件名格式 -->
-      <fileNamePattern>${log.path}/sys-error.%d{yyyy-MM-dd}.log</fileNamePattern>
-      <!-- 日志最大的历史 60天 -->
-      <maxHistory>60</maxHistory>
+      <fileNamePattern>${log.path}/sys-error.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+      <maxFileSize>50MB</maxFileSize>
+      <maxHistory>30</maxHistory>
+      <totalSizeCap>3GB</totalSizeCap>
     </rollingPolicy>
     <encoder>
       <pattern>${log.pattern}</pattern>
@@ -63,15 +65,21 @@
   <!-- debug日志输出  -->
   <appender name="debug_log" class="ch.qos.logback.core.rolling.RollingFileAppender">
     <file>${log.path}/sys-debug.log</file>
-    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+    <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
       <!-- 按天回滚 daily -->
-      <fileNamePattern>${log.path}/sys-debug.%d{yyyy-MM-dd}.log</fileNamePattern>
-      <!-- 日志最大的历史 60天 -->
-      <maxHistory>60</maxHistory>
+      <fileNamePattern>${log.path}/sys-debug.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+      <maxFileSize>20MB</maxFileSize>
+      <maxHistory>7</maxHistory>
+      <totalSizeCap>500MB</totalSizeCap>
     </rollingPolicy>
     <encoder>
       <pattern>${log.pattern}</pattern>
     </encoder>
+    <filter class="ch.qos.logback.classic.filter.LevelFilter">
+      <level>DEBUG</level>
+      <onMatch>ACCEPT</onMatch>
+      <onMismatch>DENY</onMismatch>
+    </filter>
   </appender>
 
   <!-- 异步输出 -->
