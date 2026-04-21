@@ -1,4 +1,4 @@
-com/agileboot/framework/config/CaptchaMathTextCreatorTest.class
-com/agileboot/infrastructure/web/util/AuthenticationUtilsTest.class
-com/agileboot/infrastructure/annotations/RateLimitTypeTest.class
-com/agileboot/infrastructure/mybatisplus/MySqlFunctionTest.class
+com\agileboot\framework\config\CaptchaMathTextCreatorTest.class
+com\agileboot\infrastructure\mybatisplus\MySqlFunctionTest.class
+com\agileboot\infrastructure\annotations\RateLimitTypeTest.class
+com\agileboot\infrastructure\web\util\AuthenticationUtilsTest.class

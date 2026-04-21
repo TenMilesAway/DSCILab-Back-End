@@ -38,4 +38,9 @@ public class LabAchievementServiceImpl extends ServiceImpl<LabAchievementMapper,
         LabAchievementEntity achievement = getByIdNotDeleted(achievementId);
         return achievement != null && userId.equals(achievement.getOwnerUserId());
     }
+
+    @Override
+    public void upsertSnapshot(LabAchievementEntity entity) {
+        baseMapper.upsertSnapshot(entity);
+    }
 }

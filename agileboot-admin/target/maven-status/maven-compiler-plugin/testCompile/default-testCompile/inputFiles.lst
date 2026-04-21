@@ -1,5 +1,5 @@
-/Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-admin/src/test/java/com/agileboot/admin/customize/service/permission/DeptTreeDataPermissionCheckerTest.java
-/Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-admin/src/test/java/com/agileboot/admin/customize/service/permission/CustomDataPermissionCheckerTest.java
-/Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-admin/src/test/java/com/agileboot/admin/customize/service/permission/OnlySelfDataPermissionCheckerTest.java
-/Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-admin/src/test/java/com/agileboot/admin/customize/service/permission/SingleDeptDataPermissionCheckerTest.java
-/Users/yph/Desktop/workspace/DSCILab-Back-End/agileboot-admin/src/test/java/com/agileboot/admin/config/AgileBootConfigTest.java
+D:\GitRepository\DSCILab-Back-End\agileboot-admin\src\test\java\com\agileboot\admin\customize\service\permission\SingleDeptDataPermissionCheckerTest.java
+D:\GitRepository\DSCILab-Back-End\agileboot-admin\src\test\java\com\agileboot\admin\config\AgileBootConfigTest.java
+D:\GitRepository\DSCILab-Back-End\agileboot-admin\src\test\java\com\agileboot\admin\customize\service\permission\CustomDataPermissionCheckerTest.java
+D:\GitRepository\DSCILab-Back-End\agileboot-admin\src\test\java\com\agileboot\admin\customize\service\permission\OnlySelfDataPermissionCheckerTest.java
+D:\GitRepository\DSCILab-Back-End\agileboot-admin\src\test\java\com\agileboot\admin\customize\service\permission\DeptTreeDataPermissionCheckerTest.java

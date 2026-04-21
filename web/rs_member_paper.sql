@@ -1,9 +1,0 @@
-INSERT INTO `rs_member_paper` (`paper_id`, `member_id`, `is_contact`, `is_hidden`) VALUES (5, 2, b'1', b'0');
-INSERT INTO `rs_member_paper` (`paper_id`, `member_id`, `is_contact`, `is_hidden`) VALUES (6, 2, b'0', b'0');
-INSERT INTO `rs_member_paper` (`paper_id`, `member_id`, `is_contact`, `is_hidden`) VALUES (3, 3, b'0', b'0');
-INSERT INTO `rs_member_paper` (`paper_id`, `member_id`, `is_contact`, `is_hidden`) VALUES (1, 5, b'0', b'0');
-INSERT INTO `rs_member_paper` (`paper_id`, `member_id`, `is_contact`, `is_hidden`) VALUES (2, 5, b'0', b'0');
-INSERT INTO `rs_member_paper` (`paper_id`, `member_id`, `is_contact`, `is_hidden`) VALUES (3, 5, b'1', b'0');
-INSERT INTO `rs_member_paper` (`paper_id`, `member_id`, `is_contact`, `is_hidden`) VALUES (4, 5, b'0', b'0');
-INSERT INTO `rs_member_paper` (`paper_id`, `member_id`, `is_contact`, `is_hidden`) VALUES (5, 5, b'0', b'0');
-INSERT INTO `rs_member_paper` (`paper_id`, `member_id`, `is_contact`, `is_hidden`) VALUES (6, 5, b'1', b'0');

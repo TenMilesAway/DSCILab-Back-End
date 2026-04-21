@@ -2,6 +2,7 @@ package com.agileboot.infrastructure.log;
 
 import cn.hutool.json.JSONUtil;
 import com.agileboot.common.utils.jackson.JacksonUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -10,6 +11,10 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.stereotype.Component;
+
+import java.lang.reflect.Array;
+import java.util.Collection;
+import java.util.Map;
 
 
 /**
@@ -20,22 +25,33 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class MethodLogAspect {
 
+    private static final int MAX_TEXT_LENGTH = 200;
+
     @Pointcut("execution(public * com.agileboot..db.*Service.*(..))")
     public void dbService() {
     }
 
     @Around("dbService()")
     public Object aroundDbService(ProceedingJoinPoint joinPoint) throws Throwable {
+        long start = System.currentTimeMillis();
         Object proceed = joinPoint.proceed();
-        log.info("DB SERVICE : {} ; REQUEST：{} ; RESPONSE : {}", joinPoint.getSignature().toShortString(),
-            safeToJson(joinPoint.getArgs()), safeToJson(proceed));
+        if (log.isTraceEnabled()) {
+            log.trace("DB SERVICE : {} ; ARGS: {} ; RESULT: {} ; COST: {}ms",
+                joinPoint.getSignature().toShortString(),
+                summarizeArgs(joinPoint.getArgs()),
+                summarizeObject(proceed),
+                System.currentTimeMillis() - start);
+        }
         return proceed;
     }
 
     @AfterThrowing(value = "dbService()", throwing = "e")
     public void afterDbServiceThrow(JoinPoint joinPoint, Exception e) {
-        log.error("DB SERVICE : {} ; REQUEST：{} ; EXCEPTION : {}", joinPoint.getSignature().toShortString(),
-            safeToJson(joinPoint.getArgs()), e.getMessage());
+        log.error("DB SERVICE : {} ; ARGS: {} ; EXCEPTION: {} ; MESSAGE: {}",
+            joinPoint.getSignature().toShortString(),
+            summarizeArgs(joinPoint.getArgs()),
+            e.getClass().getSimpleName(),
+            truncate(e.getMessage()));
     }
 
 
@@ -45,40 +61,102 @@ public class MethodLogAspect {
 
     @Around("applicationServiceLog()")
     public Object aroundApplicationService(ProceedingJoinPoint joinPoint) throws Throwable {
+        long start = System.currentTimeMillis();
         Object proceed = joinPoint.proceed();
-        log.info("APPLICATION SERVICE : {} ; REQUEST：{} ; RESPONSE : {}", joinPoint.getSignature().toShortString(),
-            safeToJson(joinPoint.getArgs()), safeToJson(proceed));
+        if (log.isTraceEnabled()) {
+            log.trace("APPLICATION SERVICE : {} ; ARGS: {} ; RESULT: {} ; COST: {}ms",
+                joinPoint.getSignature().toShortString(),
+                summarizeArgs(joinPoint.getArgs()),
+                summarizeObject(proceed),
+                System.currentTimeMillis() - start);
+        }
         return proceed;
     }
 
     @AfterThrowing(value = "applicationServiceLog()", throwing = "e")
     public void afterApplicationServiceThrow(JoinPoint joinPoint, Exception e) {
-        log.error("APPLICATION SERVICE : {} ; REQUEST：{} ; EXCEPTION : {}", joinPoint.getSignature().toShortString(),
-            safeToJson(joinPoint.getArgs()), e.getMessage());
+        log.error("APPLICATION SERVICE : {} ; ARGS: {} ; EXCEPTION: {} ; MESSAGE: {}",
+            joinPoint.getSignature().toShortString(),
+            summarizeArgs(joinPoint.getArgs()),
+            e.getClass().getSimpleName(),
+            truncate(e.getMessage()));
     }
 
 
-    /**
-     * 安全的打印出Json字符串 因为Jackson的Json格式化要求比较高，可能会报错
-     * 如果报错的话 使用Hutool的JSON工具 如果还是报错，直接使用对象的toString方法即可
-     * 目的只是为了打印参数和返回值
-     * 逻辑上不用太严格
-     */
-    private String safeToJson(Object o) {
-        if (o == null) {
+    private String summarizeArgs(Object[] args) {
+        if (args == null || args.length == 0) {
+            return "[]";
+        }
+        StringBuilder sb = new StringBuilder("[");
+        for (int i = 0; i < args.length; i++) {
+            if (i > 0) {
+                sb.append(", ");
+            }
+            sb.append("arg").append(i).append("=").append(summarizeObject(args[i]));
+        }
+        return sb.append("]").toString();
+    }
+
+    private String summarizeObject(Object value) {
+        if (value == null) {
             return "null";
+        }
+        if (value instanceof IPage<?>) {
+            IPage<?> page = (IPage<?>) value;
+            int recordsSize = page.getRecords() == null ? 0 : page.getRecords().size();
+            return String.format("IPage(current=%d,size=%d,total=%d,pages=%d,records=%d)",
+                page.getCurrent(), page.getSize(), page.getTotal(), page.getPages(), recordsSize);
+        }
+        if (value instanceof CharSequence) {
+            return "String(len=" + ((CharSequence) value).length() + ")";
+        }
+        if (value instanceof Number || value instanceof Boolean || value instanceof Enum<?>) {
+            return String.valueOf(value);
+        }
+        if (value instanceof Collection<?>) {
+            return value.getClass().getSimpleName() + "(size=" + ((Collection<?>) value).size() + ")";
+        }
+        if (value instanceof Map<?, ?>) {
+            return value.getClass().getSimpleName() + "(size=" + ((Map<?, ?>) value).size() + ")";
+        }
+        if (value.getClass().isArray()) {
+            return value.getClass().getComponentType().getSimpleName() + "[](len=" + Array.getLength(value) + ")";
         }
         String json = null;
         try {
-            json = JacksonUtil.to(o);
+            json = JacksonUtil.to(value);
         } catch (Exception e) {
-            json = JSONUtil.toJsonStr(o);
-        } finally {
-            if (json == null) {
-                json = o.toString();
-            }
+            json = JSONUtil.toJsonStr(value);
         }
-        return json;
+        if (json == null || json.trim().isEmpty()) {
+            return value.getClass().getSimpleName();
+        }
+        return value.getClass().getSimpleName() + "(" + truncate(maskSensitive(json)) + ")";
+    }
+
+    private String maskSensitive(String text) {
+        if (text == null) {
+            return null;
+        }
+        return text
+            .replaceAll("(?i)\\\"password\\\"\\s*:\\s*\\\"[^\\\"]*\\\"", "\"password\":\"***\"")
+            .replaceAll("(?i)\\\"pwd\\\"\\s*:\\s*\\\"[^\\\"]*\\\"", "\"pwd\":\"***\"")
+            .replaceAll("(?i)\\\"token\\\"\\s*:\\s*\\\"[^\\\"]*\\\"", "\"token\":\"***\"")
+            .replaceAll("(?i)\\\"authorization\\\"\\s*:\\s*\\\"[^\\\"]*\\\"", "\"authorization\":\"***\"")
+            .replaceAll("(?i)\\\"secret\\\"\\s*:\\s*\\\"[^\\\"]*\\\"", "\"secret\":\"***\"")
+            .replaceAll("(?i)\\\"email\\\"\\s*:\\s*\\\"[^\\\"]*\\\"", "\"email\":\"***\"")
+            .replaceAll("(?i)\\\"phone\\\"\\s*:\\s*\\\"[^\\\"]*\\\"", "\"phone\":\"***\"")
+            .replaceAll("(?i)\\\"mobile\\\"\\s*:\\s*\\\"[^\\\"]*\\\"", "\"mobile\":\"***\"");
+    }
+
+    private String truncate(String text) {
+        if (text == null) {
+            return "";
+        }
+        if (text.length() <= MAX_TEXT_LENGTH) {
+            return text;
+        }
+        return text.substring(0, MAX_TEXT_LENGTH) + "...(truncated)";
     }
 
 

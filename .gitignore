@@ -26,5 +26,11 @@ tsconfig.tsbuildinfo/target/
 /target/
 /target/
 /target/
+
+# Docker MySQL runtime data (do not version)
+docker/mysql-data/
+
+# Timestamped DB backup dumps
+docker/sql/web_before_replace_*.sql
 /target/
 /target/

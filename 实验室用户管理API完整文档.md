@@ -1411,6 +1411,92 @@ curl -X PUT "http://localhost:8080/lab/users/crud/2" \
   }'
 ```
 
+### 4.1 管理员上传用户头像
+```
+POST /lab/users/crud/{userId}/photo
+```
+用途: 管理员为指定实验室用户上传头像，并将头像绑定到该用户资料。
+
+权限: 仅管理员  
+实现与代码一致，接口鉴权为 `@PreAuthorize("@labUserPermission.isAdmin()")`。
+
+请求方式:
+- `multipart/form-data`
+
+路径参数:
+```json
+{
+  "userId": {
+    "type": "number",
+    "required": true,
+    "remark": "目标实验室用户 ID"
+  }
+}
+```
+
+表单参数:
+```json
+{
+  "photofile": {
+    "type": "file",
+    "required": true,
+    "remark": "头像图片文件，优先使用该字段；同时兼容 avatarfile、file"
+  }
+}
+```
+
+处理逻辑:
+1. 校验当前登录人是否为管理员。
+2. 校验上传文件非空。
+3. 复用系统现有上传能力 `FileUploadUtils.upload(UploadSubDir.AVATAR_PATH, file)` 完成文件校验与落盘。
+4. 校验 `userId` 对应的实验室用户是否存在。
+5. 仅更新 `lab_user.photo` 字段，并同步 `updater_id`、`update_time`。
+6. 返回统一响应 `ResponseDTO<UploadFileDTO>`。
+
+文件校验说明:
+- 复用系统统一上传规则，不单独实现头像专用校验。
+- 文件大小上限沿用 `FileUploadUtils.MAX_FILE_SIZE`，当前为 `50MB`。
+- 文件类型沿用统一白名单，包含 `bmp/gif/jpg/jpeg/png` 等扩展名。
+- 存储根目录来自 `agileboot.file-base-dir`，必须为应用进程可写的绝对路径；开发环境默认配置为 `${user.home}/agileboot/files`，最终头像目录为 `${user.home}/agileboot/files/profile/avatar/`。
+- 如果运行环境额外配置了 Spring 或容器上传上限，则实际可上传大小还会受运行环境限制。
+
+返回数据:
+```json
+{
+  "code": 200,
+  "msg": "操作成功",
+  "data": {
+    "imgUrl": "/profile/avatar/20260401123000_avatar_xxx.png"
+  }
+}
+```
+
+常见失败场景:
+- 用户不存在: `USER_NON_EXIST`
+- 上传文件为空: `USER_UPLOAD_FILE_FAILED`
+- 文件类型不允许: `UPLOAD_FILE_TYPE_NOT_ALLOWED`
+- 文件过大: `UPLOAD_FILE_SIZE_EXCEED_MAX_SIZE`
+- 非管理员访问: 无权限错误
+
+请求示例:
+```bash
+curl -X POST "http://localhost:8080/lab/users/crud/123/photo" \
+  -H "Authorization: Bearer {admin_token}" \
+  -H "Content-Type: multipart/form-data" \
+  -F "photofile=@D:/images/avatar.png"
+```
+
+响应示例:
+```json
+{
+  "code": 200,
+  "msg": "操作成功",
+  "data": {
+    "imgUrl": "/profile/avatar/20260401123000_avatar_xxx.png"
+  }
+}
+```
+
 ## ➕ 用户创建与删除接口
 
 ### 5. 创建用户（管理员）

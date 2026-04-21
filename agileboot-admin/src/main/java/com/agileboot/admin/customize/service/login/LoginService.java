@@ -16,7 +16,6 @@ import com.agileboot.common.exception.ApiException;
 import com.agileboot.common.exception.error.ErrorCode;
 import com.agileboot.common.exception.error.ErrorCode.Business;
 import com.agileboot.common.utils.ServletHolderUtil;
-import com.agileboot.common.utils.i18n.MessageUtils;
 import com.agileboot.domain.common.cache.GuavaCacheService;
 import com.agileboot.domain.common.cache.MapCache;
 import com.agileboot.domain.common.cache.RedisCacheService;
@@ -87,7 +86,7 @@ public class LoginService {
                 loginCommand.getUsername(), decryptPassword));
         } catch (BadCredentialsException e) {
             ThreadPoolManager.execute(AsyncTaskFactory.loginInfoTask(loginCommand.getUsername(), LoginStatusEnum.LOGIN_FAIL,
-                MessageUtils.message("Business.LOGIN_WRONG_USER_PASSWORD")));
+                ErrorCode.Business.LOGIN_WRONG_USER_PASSWORD.message()));
             throw new ApiException(e, ErrorCode.Business.LOGIN_WRONG_USER_PASSWORD);
         } catch (AuthenticationException e) {
             ThreadPoolManager.execute(AsyncTaskFactory.loginInfoTask(loginCommand.getUsername(), LoginStatusEnum.LOGIN_FAIL, e.getMessage()));

@@ -1578,41 +1578,87 @@ public class LabAchievementApplicationService {
      * 切换我在某成果中的个人页可见性（仅作者本人可操作自己的可见性）
      */
     @Transactional(rollbackFor = Exception.class)
-    public Boolean toggleMyVisibilityInAchievement(Long achievementId, Boolean visible, Long currentUserId) {
-        System.out.println("DEBUG: 切换可见性 - achievementId=" + achievementId + ", visible=" + visible + ", userId=" + currentUserId);
+    public Boolean toggleMyVisibilityInAchievement(Long achievementId, Boolean visible, Long currentUserId, String type) {
+        if (achievementId == null) {
+            throw new ApiException(ErrorCode.Business.COMMON_OBJECT_NOT_FOUND, "", "成果");
+        }
+        String normalizedType = type == null ? "" : type.trim().toLowerCase();
+        Boolean newVisible = Boolean.TRUE.equals(visible);
 
-        // 检查成果是否存在
-        LabAchievementEntity achievement = achievementService.getByIdNotDeleted(achievementId);
-        if (achievement == null) {
+        if (!"paper".equals(normalizedType) && !"project".equals(normalizedType)) {
+            throw new ApiException(ErrorCode.Client.COMMON_REQUEST_PARAMETERS_INVALID,
+                "type参数必须为paper或project");
+        }
+
+        if ("paper".equals(normalizedType)) {
+            LabPaperEntity paper = paperService.getById(achievementId);
+            if (paper == null || Boolean.TRUE.equals(paper.getDeleted())) {
+                throw new ApiException(ErrorCode.Business.COMMON_OBJECT_NOT_FOUND, achievementId, "论文成果");
+            }
+            LabPaperAuthorEntity paperAuthorRecord = authorService.getAuthorRecord(achievementId, currentUserId);
+            if (paperAuthorRecord == null) {
+                throw new ApiException(ErrorCode.Business.COMMON_OBJECT_NOT_FOUND, "", "您不是该成果的作者");
+            }
+            paperAuthorRecord.setVisible(newVisible);
+            paperAuthorRecord.setUpdateTime(new java.util.Date());
+            authorService.updateById(paperAuthorRecord);
+            return paperAuthorRecord.getVisible();
+        }
+
+        LabProjectEntity project = projectService.getById(achievementId);
+        if (project == null || Boolean.TRUE.equals(project.getDeleted())) {
+            throw new ApiException(ErrorCode.Business.COMMON_OBJECT_NOT_FOUND, achievementId, "项目成果");
+        }
+        LabProjectAuthorEntity projectAuthorRecord = projectAuthorService.lambdaQuery()
+            .eq(LabProjectAuthorEntity::getProjectId, achievementId)
+            .eq(LabProjectAuthorEntity::getUserId, currentUserId)
+            .eq(LabProjectAuthorEntity::getDeleted, false)
+            .one();
+        if (projectAuthorRecord == null) {
+            throw new ApiException(ErrorCode.Business.COMMON_OBJECT_NOT_FOUND, "", "您不是该成果的作者");
+        }
+        projectAuthorRecord.setVisible(newVisible);
+        projectAuthorRecord.setUpdateTime(new java.util.Date());
+        projectAuthorService.updateById(projectAuthorRecord);
+        return projectAuthorRecord.getVisible();
+    }
+
+    private Integer resolveAchievementTypeForVisibility(Long achievementId, Long currentUserId) {
+        if (achievementId == null) {
             throw new ApiException(ErrorCode.Business.COMMON_OBJECT_NOT_FOUND, "", "成果");
         }
 
-        if (Integer.valueOf(1).equals(achievement.getType())) {
-            com.agileboot.domain.lab.paper.author.LabPaperAuthorEntity authorRecord =
-                authorService.getAuthorRecord(achievementId, currentUserId);
-            if (authorRecord == null) {
-                throw new ApiException(ErrorCode.Business.COMMON_OBJECT_NOT_FOUND, "", "您不是该成果的作者");
+        LabPaperAuthorEntity paperAuthor = authorService.getAuthorRecord(achievementId, currentUserId);
+        if (paperAuthor != null) {
+            LabPaperEntity paper = paperService.getById(achievementId);
+            if (paper != null && !Boolean.TRUE.equals(paper.getDeleted())) {
+                return 1;
             }
-            authorRecord.setVisible(Boolean.TRUE.equals(visible));
-            authorRecord.setUpdateTime(new java.util.Date());
-            authorService.updateById(authorRecord);
-            return authorRecord.getVisible();
-        } else if (Integer.valueOf(2).equals(achievement.getType())) {
-            LabProjectAuthorEntity authorRecord = projectAuthorService.lambdaQuery()
-                .eq(LabProjectAuthorEntity::getProjectId, achievementId)
-                .eq(LabProjectAuthorEntity::getUserId, currentUserId)
-                .eq(LabProjectAuthorEntity::getDeleted, false)
-                .one();
-            if (authorRecord == null) {
-                throw new ApiException(ErrorCode.Business.COMMON_OBJECT_NOT_FOUND, "", "您不是该成果的作者");
-            }
-            authorRecord.setVisible(Boolean.TRUE.equals(visible));
-            authorRecord.setUpdateTime(new java.util.Date());
-            projectAuthorService.updateById(authorRecord);
-            return authorRecord.getVisible();
-        } else {
-            throw new ApiException(ErrorCode.Business.COMMON_UNSUPPORTED_OPERATION, "未知的成果类型");
         }
+
+        LabProjectAuthorEntity projectAuthor = projectAuthorService.lambdaQuery()
+            .eq(LabProjectAuthorEntity::getProjectId, achievementId)
+            .eq(LabProjectAuthorEntity::getUserId, currentUserId)
+            .eq(LabProjectAuthorEntity::getDeleted, false)
+            .one();
+        if (projectAuthor != null) {
+            LabProjectEntity project = projectService.getById(achievementId);
+            if (project != null && !Boolean.TRUE.equals(project.getDeleted())) {
+                return 2;
+            }
+        }
+
+        LabPaperEntity paper = paperService.getById(achievementId);
+        if (paper != null && !Boolean.TRUE.equals(paper.getDeleted())) {
+            return 1;
+        }
+
+        LabProjectEntity project = projectService.getById(achievementId);
+        if (project != null && !Boolean.TRUE.equals(project.getDeleted())) {
+            return 2;
+        }
+
+        throw new ApiException(ErrorCode.Business.COMMON_OBJECT_NOT_FOUND, achievementId, "成果");
     }
     /**
      * 获取公开成果列表（所有未删除的成果）
@@ -2197,4 +2243,5 @@ public class LabAchievementApplicationService {
             .eq(LabProjectAuthorEntity::getDeleted, false)
             .count() > 0;
     }
+
 }

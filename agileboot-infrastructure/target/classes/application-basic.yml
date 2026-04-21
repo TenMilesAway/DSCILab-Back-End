@@ -43,7 +43,7 @@ agileboot:
 logging:
   level:
     # 记得配置到包名
-    com.agileboot: debug
+    com.agileboot: info
     org.springframework: info
 
 

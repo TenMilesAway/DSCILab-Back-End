@@ -90,8 +90,8 @@ logging:
 agileboot:
   auth:
     use-lab-only: true
-  # 文件基路径
-  file-base-dir: /Users/yph/Desktop/workspace/DSCILab-Back-End/files
+  # 文件基路径 - 使用相对路径，自动在文件目录下创建子目录
+  file-base-dir: ${user.home}/agileboot/files
   # 前端url请求转发前缀
   api-prefix: ""
   demo-enabled: false

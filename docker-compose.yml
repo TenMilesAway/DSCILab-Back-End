@@ -1,0 +1,67 @@
+services:
+  # 1. 数据库服务
+  agileboot-mysql:
+    image: mysql:8.0
+    container_name: agileboot-mysql
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=12345 # 设置数据库密码
+      - MYSQL_DATABASE=web # 创建默认数据库 'web'
+    volumes:
+      # 挂载数据卷，保证重启后数据不丢失
+      - ./docker/mysql-data:/var/lib/mysql
+      # 首次初始化：仅在数据目录为空时执行
+      - ./web.sql:/docker-entrypoint-initdb.d/001-web.sql:ro
+
+    command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p12345"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 15s
+
+  # 2. 缓存服务
+  agileboot-redis:
+    image: redis:latest
+    container_name: agileboot-redis
+    command: ["redis-server", "--requirepass", "12345"]
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "12345", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+
+  # 3. 后端服务 (你刚刚构建的那个)
+  agileboot-backend:
+    image: agileboot-backend:v1 # 使用你刚才 build 好的镜像名
+    container_name: agileboot-backend
+    ports:
+      - "8080:8080"
+    depends_on:
+      agileboot-mysql:
+        condition: service_healthy
+      agileboot-redis:
+        condition: service_healthy
+    environment:
+      # 1. 数据库配置
+      - SPRING_DATASOURCE_DYNAMIC_DATASOURCE_MASTER_URL=jdbc:mysql://agileboot-mysql:3306/web?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=GMT%2B8
+      - SPRING_DATASOURCE_DYNAMIC_DATASOURCE_MASTER_PASSWORD=12345
+
+      # 2. Redis 配置
+      - SPRING_REDIS_HOST=agileboot-redis
+      - SPRING_REDIS_PORT=6379
+      - SPRING_REDIS_PASSWORD=12345
+
+      # 3. 追踪ID配置
+      - AGILEBOOT_TRACEREQUESTIDKEY=traceId
+
+      # 4. Token 完整配置全家桶
+      - TOKEN_HEADER=Authorization
+      - TOKEN_SECRET=abcdefghijklmnopqrstuvwxyz1234567890ABCDEF
+      - TOKEN_EXPIRETIME=60
+      - TOKEN_AUTOREFRESHTIME=20
